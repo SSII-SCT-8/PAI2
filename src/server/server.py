@@ -1,4 +1,4 @@
-"""Servidor TCP para verificación de integridad en transacciones financieras."""
+﻿"""Servidor TCP para verificaciÃ³n de integridad en transacciones financieras."""
 import socket
 import ssl
 import threading
@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 
 
 class IntegrityServer:
-    """Servidor TCP con verificación de integridad."""
+    """Servidor TCP con verificaciÃ³n de integridad."""
     
     def __init__(self, host: str = SERVER_HOST, port: int = SERVER_PORT):
         self.host = host
@@ -88,7 +88,7 @@ class IntegrityServer:
         signal.signal(signal.SIGTERM, self._signal_handler)
     
     def _signal_handler(self, signum, frame):
-        logger.info(f"Señal {signum} recibida, cerrando servidor...")
+        logger.info(f"SeÃ±al {signum} recibida, cerrando servidor...")
         self.stop()
         sys.exit(0)
     
@@ -111,8 +111,8 @@ class IntegrityServer:
             self.running = True
             logger.info(f"Transporte activo: {self.transport_mode}")
             
-            logger.info(f"✓ Servidor de integridad iniciado en {self.host}:{self.port}")
-            logger.info(f"✓ Esperando conexiones (máx: {MAX_CONNECTIONS})...")
+            logger.info(f"âœ“ Servidor de integridad iniciado en {self.host}:{self.port}")
+            logger.info(f"âœ“ Esperando conexiones (mÃ¡x: {MAX_CONNECTIONS})...")
             
 
             cleanup_thread = threading.Thread(target=self._periodic_cleanup, daemon=True)
@@ -125,7 +125,7 @@ class IntegrityServer:
                     
                     with self.connections_lock:
                         if self.active_connections >= MAX_CONNECTIONS:
-                            logger.warning(f"Conexión rechazada (máximo alcanzado): {client_address}")
+                            logger.warning(f"ConexiÃ³n rechazada (mÃ¡ximo alcanzado): {client_address}")
                             client_socket.close()
                             continue
                         
@@ -144,7 +144,7 @@ class IntegrityServer:
                             client_socket.close()
                             continue
                     
-                    logger.info(f"Nueva conexión desde {client_address} (activas: {self.active_connections})")
+                    logger.info(f"Nueva conexiÃ³n desde {client_address} (activas: {self.active_connections})")
                     
                     client_thread = threading.Thread(
                         target=self._handle_client,
@@ -155,7 +155,10 @@ class IntegrityServer:
                     
                 except Exception as e:
                     if self.running:
-                        logger.error(f"Error aceptando conexión: {e}")
+                        if self._is_expected_accept_error(e):
+                            logger.debug(f"Error transitorio aceptando conexiÃ³n: {e}")
+                        else:
+                            logger.error(f"Error aceptando conexiÃ³n: {e}")
         
         except Exception as e:
             logger.error(f"Error iniciando servidor: {e}", exc_info=True)
@@ -170,18 +173,41 @@ class IntegrityServer:
             except:
                 pass
         logger.info("Servidor detenido")
-    
+
+    def _is_expected_accept_error(self, error: Exception) -> bool:
+        """Identifica errores transitorios esperables durante handshakes fallidos."""
+        if self.transport_mode != "TLS":
+            return False
+
+        winerror = getattr(error, "winerror", None)
+        errno = getattr(error, "errno", None)
+        message = str(error).lower()
+        transient_codes = {10053, 10054, 104}
+
+        return (
+            winerror in transient_codes
+            or errno in transient_codes
+            or "10053" in message
+            or "10054" in message
+            or "connection reset by peer" in message
+            or "software caused connection abort" in message
+            or "established connection was aborted" in message
+            or "anulada una conexion establecida" in message
+            or "anulada una conexión establecida" in message
+            or "interrupcion de una conexion existente" in message
+            or "interrupción de una conexión existente" in message
+        )    
     def _periodic_cleanup(self):
-        """Limpia datos antiguos periódicamente."""
+        """Limpia datos antiguos periÃ³dicamente."""
         while self.running:
             time.sleep(60)
             try:
                 self.security.cleanup_old_data()
             except Exception as e:
-                logger.error(f"Error en limpieza periódica: {e}")
+                logger.error(f"Error en limpieza periÃ³dica: {e}")
     
     def _handle_client(self, client_socket: socket.socket, client_address: tuple):
-        """Maneja la comunicación con un cliente."""
+        """Maneja la comunicaciÃ³n con un cliente."""
         client_ip = client_address[0]
         session_username: Optional[str] = None
         
@@ -201,13 +227,13 @@ class IntegrityServer:
                 try:
                     response = self._process_message(msg_dict, client_ip, session_username)
                     
-                    # Si es LOGIN exitoso, guardar username de sesión
+                    # Si es LOGIN exitoso, guardar username de sesiÃ³n
                     if (msg_dict.get("type") == "LOGIN" and 
                         response.get("success") and 
                         "data" in response):
                         session_username = response["data"].get("username")
                     
-                    # Si es LOGOUT, limpiar sesión
+                    # Si es LOGOUT, limpiar sesiÃ³n
                     if msg_dict.get("type") == "LOGOUT":
                         session_username = None
                     
@@ -219,13 +245,13 @@ class IntegrityServer:
                     send_message(client_socket, error_resp)
         
         except Exception as e:
-            logger.error(f"Error en comunicación con {client_ip}: {e}")
+            logger.error(f"Error en comunicaciÃ³n con {client_ip}: {e}")
         
         finally:
             client_socket.close()
             with self.connections_lock:
                 self.active_connections -= 1
-            logger.info(f"Conexión cerrada: {client_ip} (activas: {self.active_connections})")
+            logger.info(f"ConexiÃ³n cerrada: {client_ip} (activas: {self.active_connections})")
     
     def _process_message(
         self,
@@ -246,7 +272,7 @@ class IntegrityServer:
         if msg_type == "REGISTER":
             return self._handle_register(username, payload, client_ip, nonce, ts)
         
-        # Resto de operaciones requieren verificación de integridad
+        # Resto de operaciones requieren verificaciÃ³n de integridad
         try:
             self.security.validate_timestamp(ts)
             
@@ -260,10 +286,10 @@ class IntegrityServer:
             
             if not verify_hmac(user_key, canonical_bytes, mac):
                 logger.error(
-                    f"MAC INVÁLIDO detectado: usuario '{username}' (IP: {client_ip}) - "
+                    f"MAC INVÃLIDO detectado: usuario '{username}' (IP: {client_ip}) - "
                     f"Posible MITM. MAC recibido: {truncate_for_log(mac)}"
                 )
-                raise InvalidMACError("MAC inválido (posible ataque MITM)")
+                raise InvalidMACError("MAC invÃ¡lido (posible ataque MITM)")
             
             self.security.check_and_store_nonce(username, nonce, ts)
             
@@ -273,11 +299,11 @@ class IntegrityServer:
             elif msg_type == "TX":
                 if not session_username or session_username != username:
                     logger.warning(
-                        f"TX rechazada: usuario '{username}' sin sesión activa (IP: {client_ip})"
+                        f"TX rechazada: usuario '{username}' sin sesiÃ³n activa (IP: {client_ip})"
                     )
                     return create_error_response(
                         "AUTH_ERROR",
-                        "Debe iniciar sesión antes de enviar transacciones"
+                        "Debe iniciar sesiÃ³n antes de enviar transacciones"
                     )
                 raw_message = json.dumps(msg_dict, sort_keys=True)
                 mac_trunc = truncate_for_log(mac)
@@ -288,11 +314,11 @@ class IntegrityServer:
             elif msg_type == "LOGOUT":
                 if not session_username or session_username != username:
                     logger.warning(
-                        f"LOGOUT rechazado: usuario '{username}' sin sesión activa (IP: {client_ip})"
+                        f"LOGOUT rechazado: usuario '{username}' sin sesiÃ³n activa (IP: {client_ip})"
                     )
                     return create_error_response(
                         "AUTH_ERROR",
-                        "No hay sesión activa para cerrar"
+                        "No hay sesiÃ³n activa para cerrar"
                     )
                 return self.handler.handle_logout(username, payload)
             
@@ -322,7 +348,7 @@ class IntegrityServer:
         nonce: str,
         ts: int
     ) -> dict:
-        """Maneja REGISTER sin verificación de MAC (usuario nuevo)."""
+        """Maneja REGISTER sin verificaciÃ³n de MAC (usuario nuevo)."""
         try:
             self.security.validate_timestamp(ts)
             
@@ -348,9 +374,10 @@ def main():
     try:
         server.start()
     except KeyboardInterrupt:
-        logger.info("Interrupción de teclado recibida")
+        logger.info("InterrupciÃ³n de teclado recibida")
         server.stop()
 
 
 if __name__ == "__main__":
     main()
+

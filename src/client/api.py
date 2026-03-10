@@ -1,5 +1,5 @@
-"""
-API de comunicación del cliente con el servidor.
+﻿"""
+API de comunicaciÃ³n del cliente con el servidor.
 """
 import socket
 import ssl
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class ClientAPI:
-    """Cliente para comunicación con el servidor de integridad."""
+    """Cliente para comunicaciÃ³n con el servidor de integridad."""
     
     def __init__(self, host: str = SERVER_HOST, port: int = SERVER_PORT):
         self.host = host
@@ -128,7 +128,7 @@ class ClientAPI:
         logger.info("Desconectado del servidor")
     
     def _generate_unique_nonce(self) -> str:
-        """Genera un nonce único no usado anteriormente."""
+        """Genera un nonce Ãºnico no usado anteriormente."""
         nonce = generate_nonce()
         while nonce in self._used_nonces:
             nonce = generate_nonce()
@@ -147,10 +147,7 @@ class ClientAPI:
 
     def _transport_error_response(self, error: Exception) -> Dict[str, Any]:
         """Normaliza errores de transporte para respuestas al usuario."""
-        if self.transport_mode == "PLAIN" and isinstance(
-            error,
-            (ProtocolError, ssl.SSLError, OSError, ConnectionResetError, BrokenPipeError),
-        ):
+        if self._is_tls_required_error(error):
             return {
                 "success": False,
                 "code": "TLS_REQUIRED",
@@ -158,7 +155,47 @@ class ClientAPI:
             }
 
         return {"success": False, "message": str(error)}
-    
+
+    def _is_tls_required_error(self, error: Exception) -> bool:
+        """Determina si el error sugiere mismatch PLAIN cliente vs servidor TLS."""
+        if self.transport_mode != "PLAIN":
+            return False
+
+        if isinstance(error, ssl.SSLError):
+            return True
+
+        if isinstance(error, ProtocolError):
+            message = str(error).lower()
+            if "timeout" in message:
+                return False
+            signatures = (
+                "wrong version number",
+                "tlsv1 alert",
+                "ssl:",
+                "sslv3 alert",
+                "unknown protocol",
+                "cerrada por el peer",
+                "connection reset by peer",
+                "10054",
+                "host remoto",
+                "interrupcion de una conexion existente",
+                "interrupción de una conexión existente",
+            )
+            return any(signature in message for signature in signatures)
+
+        if isinstance(error, OSError):
+            # Evita falsos positivos: un OSError de red no implica TLS_REQUIRED.
+            message = str(error).lower()
+            tls_signatures = (
+                "wrong version number",
+                "tlsv1 alert",
+                "ssl:",
+                "sslv3 alert",
+                "unknown protocol",
+            )
+            return any(signature in message for signature in tls_signatures)
+
+        return False    
     def _create_message(
         self,
         msg_type: str,
@@ -187,7 +224,7 @@ class ClientAPI:
         if not self.connected:
             return self._not_connected_response()
         
-        # REGISTER no lleva MAC (el usuario aún no existe)
+        # REGISTER no lleva MAC (el usuario aÃºn no existe)
         msg = self._create_message(
             "REGISTER",
             username,
@@ -213,7 +250,7 @@ class ClientAPI:
             return self._transport_error_response(e)
     
     def login(self, username: str, password: str) -> Dict[str, Any]:
-        """Inicia sesión."""
+        """Inicia sesiÃ³n."""
         if not self.connected:
             return self._not_connected_response()
         
@@ -254,7 +291,7 @@ class ClientAPI:
         to_account: str,
         amount: str
     ) -> Dict[str, Any]:
-        """Envía una transacción."""
+        """EnvÃ­a una transacciÃ³n."""
         if not self.username or not self.user_key:
             return {"success": False, "message": "No autenticado"}
         
@@ -273,7 +310,7 @@ class ClientAPI:
             response = receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
             
             if response.get("success"):
-                logger.info(f"Transacción enviada: {from_account} -> {to_account}: {amount}")
+                logger.info(f"TransacciÃ³n enviada: {from_account} -> {to_account}: {amount}")
             
             return response
         
@@ -282,9 +319,9 @@ class ClientAPI:
             return self._transport_error_response(e)
     
     def logout(self) -> Dict[str, Any]:
-        """Cierra sesión."""
+        """Cierra sesiÃ³n."""
         if not self.username or not self.session_id:
-            return {"success": False, "message": "No hay sesión activa"}
+            return {"success": False, "message": "No hay sesiÃ³n activa"}
         
         msg = self._create_message(
             "LOGOUT",
@@ -308,7 +345,7 @@ class ClientAPI:
             logger.error(f"Error en LOGOUT: {e}")
             return self._transport_error_response(e)
     
-    # ==================== SIMULACIÓN DE ATAQUES ====================
+    # ==================== SIMULACIÃ“N DE ATAQUES ====================
     
     def send_replay_attack(
         self,
@@ -332,20 +369,20 @@ class ClientAPI:
             }
         )
         
-        # Remover el nonce del set local para permitir reenvío
+        # Remover el nonce del set local para permitir reenvÃ­o
         if msg["nonce"] in self._used_nonces:
             self._used_nonces.remove(msg["nonce"])
         
         try:
-            # Primera vez - debería funcionar
-            logger.warning("⚠️  SIMULACIÓN DE ATAQUE: Enviando mensaje original...")
+            # Primera vez - deberÃ­a funcionar
+            logger.warning("âš ï¸  SIMULACIÃ“N DE ATAQUE: Enviando mensaje original...")
             send_message(self.sock, msg)
             resp1 = receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
             
             time.sleep(0.5)
             
-            # Segunda vez - debería ser rechazado (replay)
-            logger.warning("⚠️  SIMULACIÓN DE ATAQUE: Reenviando mismo mensaje (REPLAY)...")
+            # Segunda vez - deberÃ­a ser rechazado (replay)
+            logger.warning("âš ï¸  SIMULACIÃ“N DE ATAQUE: Reenviando mismo mensaje (REPLAY)...")
             send_message(self.sock, msg)
             resp2 = receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
             
@@ -367,7 +404,7 @@ class ClientAPI:
         if not self.username or not self.user_key:
             return {"success": False, "message": "No autenticado"}
         
-        # Crear mensaje legítimo
+        # Crear mensaje legÃ­timo
         msg = self._create_message(
             "TX",
             self.username,
@@ -378,9 +415,9 @@ class ClientAPI:
             }
         )
         
-        # Modificar payload DESPUÉS de calcular MAC (simula MITM)
+        # Modificar payload DESPUÃ‰S de calcular MAC (simula MITM)
         logger.warning(
-            f"⚠️  SIMULACIÓN DE ATAQUE MITM: "
+            f"âš ï¸  SIMULACIÃ“N DE ATAQUE MITM: "
             f"modificando amount de {amount} a {tampered_amount}"
         )
         msg["payload"]["amount"] = tampered_amount
@@ -393,3 +430,4 @@ class ClientAPI:
         except Exception as e:
             logger.error(f"Error en MITM attack: {e}")
             return {"success": False, "message": str(e)}
+
