@@ -1,4 +1,4 @@
-﻿"""Servidor TCP para verificaciÃ³n de integridad en transacciones financieras."""
+﻿"""Servidor TCP para transacciones financieras sobre TLS 1.3."""
 import socket
 import ssl
 import threading
@@ -7,7 +7,6 @@ import json
 import time
 import signal
 import sys
-from pathlib import Path
 from typing import Optional
 
 from .config import (
@@ -27,48 +26,31 @@ from .config import (
 from .storage import Storage
 from .security import SecurityManager
 from .handlers import MessageHandler
-from ..common.protocol import (
-    send_message,
-    receive_message,
-    canonicalize_message,
-    create_error_response,
-    create_success_response
-)
-from ..common.crypto import verify_hmac, truncate_for_log
+from ..common.protocol import send_message, receive_message, create_error_response
 from ..common.transport import normalize_transport_mode, create_server_ssl_context
-from ..common.models import Message
-from ..common.errors import (
-    InvalidMACError,
-    ReplayAttackError,
-    InvalidTimestampError,
-    ProtocolError,
-    SecurityError
-)
+from ..common.errors import ProtocolError, SecurityError
 
 
-# Configurar logging
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 handlers = []
 if LOG_TO_CONSOLE:
     handlers.append(logging.StreamHandler())
 if LOG_TO_FILE:
-    handlers.append(
-        logging.FileHandler(LOG_DIR / "server.log", encoding='utf-8')
-    )
+    handlers.append(logging.FileHandler(LOG_DIR / "server.log", encoding="utf-8"))
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=handlers
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=handlers,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class IntegrityServer:
-    """Servidor TCP con verificaciÃ³n de integridad."""
-    
+    """Servidor TCP con TLS obligatorio."""
+
     def __init__(self, host: str = SERVER_HOST, port: int = SERVER_PORT):
         self.host = host
         self.port = port
@@ -76,109 +58,108 @@ class IntegrityServer:
         self.server_socket: Optional[socket.socket] = None
         self.transport_mode = normalize_transport_mode(TRANSPORT_MODE)
         self.ssl_context: Optional[ssl.SSLContext] = None
-        
+
         self.storage = Storage()
         self.security = SecurityManager(self.storage)
         self.handler = MessageHandler(self.storage, self.security)
-        
+
         self.active_connections = 0
         self.connections_lock = threading.Lock()
-        
+
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
-    
+
     def _signal_handler(self, signum, frame):
-        logger.info(f"SeÃ±al {signum} recibida, cerrando servidor...")
+        logger.info(f"Senal {signum} recibida, cerrando servidor...")
         self.stop()
         sys.exit(0)
-    
+
     def start(self):
         """Inicia el servidor."""
         try:
-            if self.transport_mode == "TLS":
-                self.ssl_context = create_server_ssl_context(
-                    cert_file=TLS_CERT_FILE,
-                    key_file=TLS_KEY_FILE,
-                    ca_file=TLS_CA_FILE,
-                    min_version=TLS_MIN_VERSION,
-                )
+            self.ssl_context = create_server_ssl_context(
+                cert_file=TLS_CERT_FILE,
+                key_file=TLS_KEY_FILE,
+                ca_file=TLS_CA_FILE,
+                min_version=TLS_MIN_VERSION,
+            )
 
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(MAX_CONNECTIONS)
-            
+
             self.running = True
             logger.info(f"Transporte activo: {self.transport_mode}")
-            
-            logger.info(f"âœ“ Servidor de integridad iniciado en {self.host}:{self.port}")
-            logger.info(f"âœ“ Esperando conexiones (mÃ¡x: {MAX_CONNECTIONS})...")
-            
+            logger.info(f"Servidor iniciado en {self.host}:{self.port}")
+            logger.info(f"Esperando conexiones (max: {MAX_CONNECTIONS})...")
 
             cleanup_thread = threading.Thread(target=self._periodic_cleanup, daemon=True)
             cleanup_thread.start()
-            
-            # Bucle principal
+
             while self.running:
                 try:
                     client_socket, client_address = self.server_socket.accept()
-                    
+
                     with self.connections_lock:
                         if self.active_connections >= MAX_CONNECTIONS:
-                            logger.warning(f"ConexiÃ³n rechazada (mÃ¡ximo alcanzado): {client_address}")
+                            logger.warning(
+                                f"Conexion rechazada (maximo alcanzado): {client_address}"
+                            )
                             client_socket.close()
                             continue
-                        
+
                         self.active_connections += 1
 
-                    if self.transport_mode == "TLS":
-                        try:
-                            client_socket = self.ssl_context.wrap_socket(
-                                client_socket,
-                                server_side=True,
-                            )
-                        except ssl.SSLError as e:
-                            logger.warning(f"Handshake TLS fallido desde {client_address}: {e}")
-                            with self.connections_lock:
-                                self.active_connections -= 1
-                            client_socket.close()
-                            continue
-                    
-                    logger.info(f"Nueva conexiÃ³n desde {client_address} (activas: {self.active_connections})")
-                    
+                    try:
+                        client_socket = self.ssl_context.wrap_socket(
+                            client_socket,
+                            server_side=True,
+                        )
+                    except ssl.SSLError as e:
+                        logger.warning(
+                            f"Handshake TLS fallido desde {client_address}: {e}"
+                        )
+                        with self.connections_lock:
+                            self.active_connections -= 1
+                        client_socket.close()
+                        continue
+
+                    logger.info(
+                        f"Nueva conexion desde {client_address} "
+                        f"(activas: {self.active_connections})"
+                    )
+
                     client_thread = threading.Thread(
                         target=self._handle_client,
                         args=(client_socket, client_address),
-                        daemon=True
+                        daemon=True,
                     )
                     client_thread.start()
-                    
+
                 except Exception as e:
                     if self.running:
                         if self._is_expected_accept_error(e):
-                            logger.debug(f"Error transitorio aceptando conexiÃ³n: {e}")
+                            logger.debug(f"Error transitorio aceptando conexion: {e}")
                         else:
-                            logger.error(f"Error aceptando conexiÃ³n: {e}")
-        
+                            logger.error(f"Error aceptando conexion: {e}")
+
         except Exception as e:
             logger.error(f"Error iniciando servidor: {e}", exc_info=True)
             self.stop()
-    
+
     def stop(self):
         """Detiene el servidor."""
         self.running = False
         if self.server_socket:
             try:
                 self.server_socket.close()
-            except:
+            except Exception:
                 pass
         logger.info("Servidor detenido")
 
     def _is_expected_accept_error(self, error: Exception) -> bool:
         """Identifica errores transitorios esperables durante handshakes fallidos."""
-        if self.transport_mode != "TLS":
-            return False
-
         winerror = getattr(error, "winerror", None)
         errno = getattr(error, "errno", None)
         message = str(error).lower()
@@ -196,171 +177,124 @@ class IntegrityServer:
             or "anulada una conexión establecida" in message
             or "interrupcion de una conexion existente" in message
             or "interrupción de una conexión existente" in message
-        )    
+        )
+
     def _periodic_cleanup(self):
-        """Limpia datos antiguos periÃ³dicamente."""
+        """Limpia datos antiguos periodicamente."""
         while self.running:
             time.sleep(60)
             try:
                 self.security.cleanup_old_data()
             except Exception as e:
-                logger.error(f"Error en limpieza periÃ³dica: {e}")
-    
+                logger.error(f"Error en limpieza periodica: {e}")
+
     def _handle_client(self, client_socket: socket.socket, client_address: tuple):
-        """Maneja la comunicaciÃ³n con un cliente."""
+        """Maneja la comunicacion con un cliente."""
         client_ip = client_address[0]
         session_username: Optional[str] = None
-        
+
         try:
             while self.running:
                 try:
                     msg_dict = receive_message(client_socket, timeout=30.0)
                 except ProtocolError as e:
-                    if "cerrada" in str(e).lower():
+                    if "cerrada" in str(e).lower() or "closed" in str(e).lower():
                         break
                     logger.warning(f"Error de protocolo desde {client_ip}: {e}")
                     error_resp = create_error_response("PROTOCOL_ERROR", str(e))
                     send_message(client_socket, error_resp)
                     continue
-                
-                # Procesar
+
                 try:
                     response = self._process_message(msg_dict, client_ip, session_username)
-                    
-                    # Si es LOGIN exitoso, guardar username de sesiÃ³n
-                    if (msg_dict.get("type") == "LOGIN" and 
-                        response.get("success") and 
-                        "data" in response):
+
+                    if (
+                        msg_dict.get("type") == "LOGIN"
+                        and response.get("success")
+                        and "data" in response
+                    ):
                         session_username = response["data"].get("username")
-                    
-                    # Si es LOGOUT, limpiar sesiÃ³n
+
                     if msg_dict.get("type") == "LOGOUT":
                         session_username = None
-                    
+
                     send_message(client_socket, response)
-                    
+
                 except Exception as e:
                     logger.error(f"Error procesando mensaje: {e}", exc_info=True)
-                    error_resp = create_error_response("INTERNAL_ERROR", "Error interno del servidor")
+                    error_resp = create_error_response(
+                        "INTERNAL_ERROR", "Error interno del servidor"
+                    )
                     send_message(client_socket, error_resp)
-        
+
         except Exception as e:
-            logger.error(f"Error en comunicaciÃ³n con {client_ip}: {e}")
-        
+            logger.error(f"Error en comunicacion con {client_ip}: {e}")
+
         finally:
             client_socket.close()
             with self.connections_lock:
                 self.active_connections -= 1
-            logger.info(f"ConexiÃ³n cerrada: {client_ip} (activas: {self.active_connections})")
-    
+            logger.info(f"Conexion cerrada: {client_ip} (activas: {self.active_connections})")
+
     def _process_message(
         self,
         msg_dict: dict,
         client_ip: str,
-        session_username: Optional[str]
+        session_username: Optional[str],
     ) -> dict:
         """Procesa un mensaje recibido y devuelve la respuesta."""
         msg_type = msg_dict.get("type")
         username = msg_dict.get("username", "")
-        nonce = msg_dict.get("nonce", "")
-        ts = msg_dict.get("ts", 0)
         payload = msg_dict.get("payload", {})
-        mac = msg_dict.get("mac", "")
-        
+        ts = msg_dict.get("ts", int(time.time() * 1000))
+
         logger.debug(f"Procesando {msg_type} de usuario '{username}' (IP: {client_ip})")
-        
-        if msg_type == "REGISTER":
-            return self._handle_register(username, payload, client_ip, nonce, ts)
-        
-        # Resto de operaciones requieren verificaciÃ³n de integridad
+
         try:
-            self.security.validate_timestamp(ts)
-            
-            user = self.storage.get_user(username)
-            if not user:
-                logger.warning(f"Mensaje de usuario inexistente: '{username}' (IP: {client_ip})")
-                return create_error_response("AUTH_ERROR", "Usuario no autenticado")
-            
-            canonical_bytes = canonicalize_message(msg_dict)
-            user_key = user["user_key"]
-            
-            if not verify_hmac(user_key, canonical_bytes, mac):
-                logger.error(
-                    f"MAC INVÃLIDO detectado: usuario '{username}' (IP: {client_ip}) - "
-                    f"Posible MITM. MAC recibido: {truncate_for_log(mac)}"
-                )
-                raise InvalidMACError("MAC invÃ¡lido (posible ataque MITM)")
-            
-            self.security.check_and_store_nonce(username, nonce, ts)
-            
+            if msg_type == "REGISTER":
+                return self.handler.handle_register(username, payload, client_ip)
+
             if msg_type == "LOGIN":
                 return self.handler.handle_login(username, payload, client_ip)
-            
-            elif msg_type == "TX":
+
+            if msg_type == "TX":
                 if not session_username or session_username != username:
                     logger.warning(
-                        f"TX rechazada: usuario '{username}' sin sesiÃ³n activa (IP: {client_ip})"
+                        f"TX rechazada: usuario '{username}' sin sesion activa (IP: {client_ip})"
                     )
                     return create_error_response(
                         "AUTH_ERROR",
-                        "Debe iniciar sesiÃ³n antes de enviar transacciones"
+                        "Debe iniciar sesion antes de enviar transacciones",
                     )
                 raw_message = json.dumps(msg_dict, sort_keys=True)
-                mac_trunc = truncate_for_log(mac)
                 return self.handler.handle_transaction(
-                    username, payload, raw_message, mac_trunc, ts
+                    username,
+                    payload,
+                    raw_message,
+                    ts,
                 )
-            
-            elif msg_type == "LOGOUT":
+
+            if msg_type == "LOGOUT":
                 if not session_username or session_username != username:
                     logger.warning(
-                        f"LOGOUT rechazado: usuario '{username}' sin sesiÃ³n activa (IP: {client_ip})"
+                        f"LOGOUT rechazado: usuario '{username}' sin sesion activa (IP: {client_ip})"
                     )
                     return create_error_response(
                         "AUTH_ERROR",
-                        "No hay sesiÃ³n activa para cerrar"
+                        "No hay sesion activa para cerrar",
                     )
                 return self.handler.handle_logout(username, payload)
-            
-            elif msg_type == "PING":
+
+            if msg_type == "PING":
                 return self.handler.handle_ping(username)
-            
-            else:
-                return create_error_response("UNKNOWN_TYPE", f"Tipo de mensaje desconocido: {msg_type}")
-        
-        except InvalidMACError as e:
-            return create_error_response("INVALID_MAC", str(e))
-        
-        except ReplayAttackError as e:
-            return create_error_response("REPLAY_ATTACK", str(e))
-        
-        except InvalidTimestampError as e:
-            return create_error_response("INVALID_TIMESTAMP", str(e))
-        
+
+            return create_error_response(
+                "UNKNOWN_TYPE",
+                f"Tipo de mensaje desconocido: {msg_type}",
+            )
+
         except SecurityError as e:
             return create_error_response("SECURITY_ERROR", str(e))
-    
-    def _handle_register(
-        self,
-        username: str,
-        payload: dict,
-        client_ip: str,
-        nonce: str,
-        ts: int
-    ) -> dict:
-        """Maneja REGISTER sin verificaciÃ³n de MAC (usuario nuevo)."""
-        try:
-            self.security.validate_timestamp(ts)
-            
-            try:
-                self.security.check_and_store_nonce("REGISTER:" + username, nonce, ts)
-            except ReplayAttackError:
-                return create_error_response("REPLAY_ATTACK", "Solicitud de registro duplicada")
-            
-            return self.handler.handle_register(username, payload, client_ip)
-        
-        except InvalidTimestampError as e:
-            return create_error_response("INVALID_TIMESTAMP", str(e))
 
 
 def main():
@@ -368,16 +302,15 @@ def main():
     logger.info("=" * 60)
     logger.info("PAI2 - BYODSEC Road Warrior VPN SSL/TLS (Servidor)")
     logger.info("=" * 60)
-    
+
     server = IntegrityServer()
-    
+
     try:
         server.start()
     except KeyboardInterrupt:
-        logger.info("InterrupciÃ³n de teclado recibida")
+        logger.info("Interrupcion de teclado recibida")
         server.stop()
 
 
 if __name__ == "__main__":
     main()
-

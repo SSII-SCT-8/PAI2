@@ -1,91 +1,82 @@
-"""
-Cliente interactivo CLI para el sistema de verificación de integridad.
+﻿"""
+Cliente interactivo CLI.
 """
 import logging
 import sys
-from pathlib import Path
 from getpass import getpass
 
 from .config import LOG_DIR, LOG_LEVEL, LOG_TO_FILE, LOG_TO_CONSOLE
 from .api import ClientAPI
 
 
-# Configurar logging
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 handlers = []
 if LOG_TO_CONSOLE:
     handlers.append(logging.StreamHandler())
 if LOG_TO_FILE:
-    handlers.append(
-        logging.FileHandler(LOG_DIR / "client.log", encoding='utf-8')
-    )
+    handlers.append(logging.FileHandler(LOG_DIR / "client.log", encoding="utf-8"))
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=handlers
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=handlers,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class InteractiveClient:
-    """Cliente interactivo con menú."""
-    
+    """Cliente interactivo con menu."""
+
     def __init__(self):
         self.api = ClientAPI()
         self.running = True
-    
+
     def show_banner(self):
         """Muestra el banner de bienvenida."""
         print("\n" + "=" * 70)
         print(" PAI2 - BYODSEC Road Warrior VPN SSL/TLS para Universidad Publica")
         print("=" * 70)
-        print(" Protección implementada:")
-        print("   ✓ HMAC-SHA256 para integridad (clave 256 bits)")
-        print("   ✓ Nonce único por mensaje (anti-replay)")
-        print("   ✓ Comparación en tiempo constante (anti-timing)")
-        print("   ✓ Rate limiting y backoff exponencial (anti-brute force)")
+        print(" Proteccion implementada:")
+        print("   * TLS 1.3 obligatorio")
+        print("   * Verificacion de certificado del servidor")
+        print("   * Rate limiting y backoff exponencial (anti-brute force)")
         print("=" * 70 + "\n")
-    
+
     def show_menu(self):
-        """Muestra el menú principal."""
+        """Muestra el menu principal."""
         if not self.api.username:
-            print("\n--- MENÚ PRINCIPAL ---")
+            print("\n--- MENU PRINCIPAL ---")
             print("1. Registrar nuevo usuario")
-            print("2. Iniciar sesión")
+            print("2. Iniciar sesion")
             print("9. Salir")
         else:
-            print(f"\n--- SESIÓN ACTIVA: {self.api.username} ---")
-            print("3. Enviar transacción")
-            print("4. Cerrar sesión")
-            print("---")
-            print("5. [SIMULACIÓN] Ataque Replay")
-            print("6. [SIMULACIÓN] Ataque MITM")
+            print(f"\n--- SESION ACTIVA: {self.api.username} ---")
+            print("3. Enviar transaccion")
+            print("4. Cerrar sesion")
             print("9. Salir")
-        
+
         print()
-    
+
     def run(self):
         """Ejecuta el bucle principal del cliente."""
         self.show_banner()
-        
-        # Conectar al servidor
+
         print("Conectando al servidor...")
         if not self.api.connect():
-            print("❌ Error: No se pudo conectar al servidor")
+            print("Error: No se pudo conectar al servidor")
             return
-        
-        print("✓ Conectado exitosamente\n")
-        
+
+        print("Conectado exitosamente\n")
+
         try:
             while self.running:
                 self.show_menu()
-                
+
                 try:
-                    choice = input("Seleccione una opción: ").strip()
-                    
+                    choice = input("Seleccione una opcion: ").strip()
+
                     if choice == "1":
                         self._handle_register()
                     elif choice == "2":
@@ -94,194 +85,119 @@ class InteractiveClient:
                         self._handle_transaction()
                     elif choice == "4" and self.api.username:
                         self._handle_logout()
-                    elif choice == "5" and self.api.username:
-                        self._handle_replay_attack()
-                    elif choice == "6" and self.api.username:
-                        self._handle_mitm_attack()
                     elif choice == "9":
                         self.running = False
                     else:
-                        print("❌ Opción inválida")
-                
+                        print("Opcion invalida")
+
                 except KeyboardInterrupt:
-                    print("\n\n⚠️  Interrupción detectada")
+                    print("\n\nInterrupcion detectada")
                     self.running = False
                 except EOFError:
-                    print("\n\n⚠️  EOF detectado")
+                    print("\n\nEOF detectado")
                     self.running = False
-        
+
         finally:
             if self.api.username:
-                print("\nCerrando sesión...")
+                print("\nCerrando sesion...")
                 self.api.logout()
-            
+
             print("Desconectando...")
             self.api.disconnect()
-            print("Hasta luego!\n")
-    
+            print("Hasta luego\n")
+
     def _handle_register(self):
         """Maneja el registro de usuario."""
         print("\n--- REGISTRO DE USUARIO ---")
         username = input("Usuario: ").strip()
         if not username:
-            print("❌ Username no puede estar vacío")
+            print("Username no puede estar vacio")
             return
-        
-        password = getpass(prompt="Contraseña: ")
+
+        password = getpass(prompt="Contrasena: ")
         if not password:
-            print("❌ Password no puede estar vacío")
+            print("Password no puede estar vacio")
             return
-        
+
         print("\nRegistrando usuario...")
         response = self.api.register(username, password)
-        
+
         if response.get("success"):
-            print(f"✓ {response.get('message')}")
-            print("  Ahora puede iniciar sesión (opción 2)")
+            print(response.get("message"))
+            print("Ahora puede iniciar sesion (opcion 2)")
         else:
-            print(f"❌ Error: {response.get('message')}")
-    
+            print(f"Error: {response.get('message')}")
+
     def _handle_login(self):
-        """Maneja el inicio de sesión."""
-        print("\n--- INICIO DE SESIÓN ---")
+        """Maneja el inicio de sesion."""
+        print("\n--- INICIO DE SESION ---")
         username = input("Usuario: ").strip()
         if not username:
-            print("❌ Username no puede estar vacío")
+            print("Username no puede estar vacio")
             return
-        
-        password = getpass("Contraseña: ")
+
+        password = getpass("Contrasena: ")
         if not password:
-            print("❌ Password no puede estar vacío")
+            print("Password no puede estar vacio")
             return
-        
-        print("\nIniciando sesión...")
+
+        print("\nIniciando sesion...")
         response = self.api.login(username, password)
-        
+
         if response.get("success"):
-            print(f"✓ {response.get('message')}")
-            print(f"  Sesión iniciada como: {username}")
+            print(response.get("message"))
+            print(f"Sesion iniciada como: {username}")
         else:
-            print(f"❌ Error: {response.get('message')}")
-    
+            print(f"Error: {response.get('message')}")
+
     def _handle_transaction(self):
-        """Maneja el envío de transacciones."""
-        print("\n--- ENVIAR TRANSACCIÓN ---")
+        """Maneja el envio de transacciones."""
+        print("\n--- ENVIAR TRANSACCION ---")
         print("Formato: Cuenta origen, Cuenta destino, Cantidad")
-        
+
         from_account = input("Cuenta origen: ").strip()
         to_account = input("Cuenta destino: ").strip()
         amount = input("Cantidad: ").strip()
-        
+
         if not all([from_account, to_account, amount]):
-            print("❌ Todos los campos son obligatorios")
+            print("Todos los campos son obligatorios")
             return
-        
-        print("\nEnviando transacción con protección de integridad...")
+
+        print("\nEnviando transaccion...")
         response = self.api.send_transaction(from_account, to_account, amount)
-        
+
         if response.get("success"):
-            print(f"✓ {response.get('message')}")
-            data = response.get('data', {})
+            print(response.get("message"))
+            data = response.get("data", {})
             if data:
-                print(f"  ID de transacción: {data.get('transaction_id')}")
-                print(f"  {data.get('from_account')} → {data.get('to_account')}: {data.get('amount')}")
+                print(f"ID de transaccion: {data.get('transaction_id')}")
+                print(
+                    f"{data.get('from_account')} -> "
+                    f"{data.get('to_account')}: {data.get('amount')}"
+                )
         else:
-            print(f"❌ Error: {response.get('message')}")
-            code = response.get('code', '')
-            if code == 'INVALID_MAC':
-                print("  ⚠️  Se detectó modificación del mensaje (MITM)")
-            elif code == 'REPLAY_ATTACK':
-                print("  ⚠️  Se detectó reutilización de mensaje (Replay)")
-    
+            print(f"Error: {response.get('message')}")
+
     def _handle_logout(self):
-        """Maneja el cierre de sesión."""
-        print("\nCerrando sesión...")
+        """Maneja el cierre de sesion."""
+        print("\nCerrando sesion...")
         response = self.api.logout()
-        
+
         if response.get("success"):
-            print(f"✓ {response.get('message')}")
+            print(response.get("message"))
         else:
-            print(f"⚠️  {response.get('message')}")
-    
-    def _handle_replay_attack(self):
-        """Simula un ataque de replay."""
-        print("\n--- SIMULACIÓN DE ATAQUE REPLAY ---")
-        print("⚠️  Este modo enviará el MISMO mensaje DOS veces")
-        print("    El servidor debería RECHAZAR el segundo intento\n")
-        
-        confirm = input("¿Continuar? (s/n): ").strip().lower()
-        if confirm != 's':
-            print("Cancelado")
-            return
-        
-        from_account = input("Cuenta origen: ").strip()
-        to_account = input("Cuenta destino: ").strip()
-        amount = input("Cantidad: ").strip()
-        
-        if not all([from_account, to_account, amount]):
-            print("❌ Todos los campos son obligatorios")
-            return
-        
-        print("\n🔴 Ejecutando ataque de replay...")
-        resp1, resp2 = self.api.send_replay_attack(from_account, to_account, amount)
-        
-        print("\n--- RESULTADO PRIMER ENVÍO ---")
-        if resp1.get("success"):
-            print(f"✓ {resp1.get('message')}")
-        else:
-            print(f"❌ {resp1.get('message')}")
-        
-        print("\n--- RESULTADO SEGUNDO ENVÍO (REPLAY) ---")
-        if resp2.get("success"):
-            print(f"⚠️  VULNERABLE: El servidor aceptó el mensaje repetido!")
-            print(f"   {resp2.get('message')}")
-        else:
-            print(f"✓ PROTEGIDO: El servidor rechazó el replay")
-            print(f"   Mensaje: {resp2.get('message')}")
-            print(f"   Código: {resp2.get('code')}")
-    
-    def _handle_mitm_attack(self):
-        """Simula un ataque MITM."""
-        print("\n--- SIMULACIÓN DE ATAQUE MITM ---")
-        print("⚠️  Este modo modificará el payload DESPUÉS de calcular el MAC")
-        print("    El servidor debería RECHAZAR por MAC inválido\n")
-        
-        confirm = input("¿Continuar? (s/n): ").strip().lower()
-        if confirm != 's':
-            print("Cancelado")
-            return
-        
-        from_account = input("Cuenta origen: ").strip()
-        to_account = input("Cuenta destino: ").strip()
-        amount = input("Cantidad original: ").strip()
-        tampered_amount = input("Cantidad modificada (MITM): ").strip()
-        
-        if not all([from_account, to_account, amount, tampered_amount]):
-            print("❌ Todos los campos son obligatorios")
-            return
-        
-        print("\n🔴 Ejecutando ataque MITM...")
-        response = self.api.send_mitm_attack(from_account, to_account, amount, tampered_amount)
-        
-        print("\n--- RESULTADO ---")
-        if response.get("success"):
-            print(f"⚠️  VULNERABLE: El servidor aceptó el mensaje modificado!")
-            print(f"   {response.get('message')}")
-        else:
-            print(f"✓ PROTEGIDO: El servidor rechazó el mensaje modificado")
-            print(f"   Mensaje: {response.get('message')}")
-            print(f"   Código: {response.get('code')}")
+            print(response.get("message"))
 
 
 def main():
     """Punto de entrada del cliente."""
     client = InteractiveClient()
-    
+
     try:
         client.run()
     except Exception as e:
         logger.error(f"Error fatal: {e}", exc_info=True)
-        print(f"\n❌ Error fatal: {e}")
+        print(f"\nError fatal: {e}")
         sys.exit(1)
 
 
