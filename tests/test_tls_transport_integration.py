@@ -1,4 +1,4 @@
-"""Tests de integracion de transporte TLS (A7)."""
+﻿"""Tests de integracion de transporte TLS (A7)."""
 import shutil
 import socket
 import subprocess
@@ -93,18 +93,6 @@ class TestTLSTransportIntegration(unittest.TestCase):
             connected = client.connect()
             self.assertFalse(connected)
             self.assertEqual(client.last_connect_error_code, "TLS_HANDSHAKE_FAILED")
-
-    def test_plain_client_against_tls_server_fails(self):
-        with patch.object(api_module, "TRANSPORT_MODE", "PLAIN"):
-            client = api_module.ClientAPI(host=self.host, port=self.port)
-            self.assertTrue(client.connect())
-            try:
-                username = f"plain_fail_{uuid.uuid4().hex[:8]}"
-                response = client.register(username, "SafePassword123!")
-                self.assertFalse(response.get("success"))
-                self.assertEqual(response.get("code"), "TLS_REQUIRED")
-            finally:
-                client.disconnect()
 
     @classmethod
     def _create_cert_bundle(cls, name: str) -> Path:

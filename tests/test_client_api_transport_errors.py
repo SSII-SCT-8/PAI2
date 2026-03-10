@@ -1,4 +1,4 @@
-"""Tests de clasificacion de errores de transporte en ClientAPI."""
+﻿"""Tests de respuestas de error y estados de conexion en ClientAPI."""
 import sys
 import unittest
 from pathlib import Path
@@ -12,47 +12,33 @@ from src.common.errors import ProtocolError
 
 
 class TestClientAPITransportErrors(unittest.TestCase):
-    """Valida mapeo de errores de transporte a respuestas de usuario."""
+    """Valida respuestas de errores de transporte."""
 
     @staticmethod
-    def _plain_client() -> api_module.ClientAPI:
-        with patch.object(api_module, "TRANSPORT_MODE", "PLAIN"):
+    def _tls_client() -> api_module.ClientAPI:
+        with patch.object(api_module, "TRANSPORT_MODE", "TLS"):
             return api_module.ClientAPI(host="127.0.0.1", port=1)
 
-    def test_timeout_protocol_error_is_not_tls_required(self):
-        client = self._plain_client()
+    def test_not_connected_response_includes_last_code(self):
+        client = self._tls_client()
+        client.last_connect_error_code = "TLS_HANDSHAKE_FAILED"
+        response = client._not_connected_response()
+        self.assertFalse(response.get("success"))
+        self.assertEqual(response.get("code"), "TLS_HANDSHAKE_FAILED")
+
+    def test_transport_error_response_protocol_error(self):
+        client = self._tls_client()
         response = client._transport_error_response(
             ProtocolError("Timeout esperando respuesta")
         )
         self.assertFalse(response.get("success"))
-        self.assertNotIn("code", response)
+        self.assertIn("Timeout", response.get("message"))
 
-    def test_connection_reset_protocol_error_is_tls_required(self):
-        client = self._plain_client()
-        response = client._transport_error_response(
-            ProtocolError(
-                "Error recibiendo mensaje: [WinError 10054] "
-                "Se ha forzado la interrupcion de una conexion existente por el host remoto"
-            )
-        )
+    def test_transport_error_response_generic_error(self):
+        client = self._tls_client()
+        response = client._transport_error_response(OSError("Network is unreachable"))
         self.assertFalse(response.get("success"))
-        self.assertEqual(response.get("code"), "TLS_REQUIRED")
-
-    def test_generic_oserror_is_not_tls_required(self):
-        client = self._plain_client()
-        response = client._transport_error_response(
-            OSError(10051, "Network is unreachable")
-        )
-        self.assertFalse(response.get("success"))
-        self.assertNotIn("code", response)
-
-    def test_oserror_with_tls_signature_is_tls_required(self):
-        client = self._plain_client()
-        response = client._transport_error_response(
-            OSError("SSL: WRONG_VERSION_NUMBER")
-        )
-        self.assertFalse(response.get("success"))
-        self.assertEqual(response.get("code"), "TLS_REQUIRED")
+        self.assertIn("Network", response.get("message"))
 
 
 if __name__ == "__main__":

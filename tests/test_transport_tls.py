@@ -1,4 +1,4 @@
-"""Tests para configuracion de transporte seguro (PLAIN/TLS)."""
+﻿"""Tests para configuracion de transporte TLS-only."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -20,13 +20,13 @@ class TestTransportTLS(unittest.TestCase):
     """Valida configuracion y endurecimiento de transporte."""
 
     def test_normalize_transport_mode(self):
-        self.assertEqual(normalize_transport_mode("plain"), "PLAIN")
         self.assertEqual(normalize_transport_mode("TLS"), "TLS")
         self.assertEqual(normalize_transport_mode(" tls "), "TLS")
+        self.assertEqual(normalize_transport_mode(""), "TLS")
 
     def test_invalid_transport_mode(self):
         with self.assertRaises(ValueError):
-            normalize_transport_mode("udp")
+            normalize_transport_mode("plain")
 
     def test_parse_tls_version(self):
         version = parse_tls_version("1.3")
