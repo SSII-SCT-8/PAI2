@@ -2,6 +2,9 @@
 # Windows PowerShell
 
 Write-Host ""
+Write-Host ("=" * 70) -ForegroundColor Cyan
+Write-Host " PAI2 - BYODSEC Road Warrior VPN SSL/TLS (Servidor)" -ForegroundColor Cyan
+Write-Host ("=" * 70) -ForegroundColor Cyan
 Write-Host "Iniciando servidor..." -ForegroundColor Yellow
 Write-Host ""
 

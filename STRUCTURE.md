@@ -97,10 +97,11 @@ PAI2/
 
 ### 4. **tests/** - Suite de Tests
 
-51 tests automatizados que cubren:
+Suite `test_*.py` automatizada que cubre:
 - Funciones criptográficas (HMAC, KDF, hashing)
 - Protocolo de comunicación (framing, canonicalización)
 - Protección contra ataques (MITM, replay, brute force, timing)
+- Transporte TLS (configuración, handshake y escenarios de error)
 - Integración completa (ciclo de vida de usuario)
 
 ## Flujo de Ejecución
@@ -115,7 +116,7 @@ python -m src.server.server
 - Carga configuración (host, puerto, master key)
 - Inicializa base de datos SQLite
 - Inicia servidor TCP en puerto 9999
-- Escucha conexiones (máximo 10 concurrentes)
+- Escucha conexiones (máximo 100 concurrentes)
 
 ### 2. Inicialización del Cliente
 
@@ -165,7 +166,7 @@ Cada mensaje (excepto REGISTER) incluye:
 
 ## Gestión de Dependencias
 
-Todas las dependencias están en `requirements.txt` (actualmente solo librerías estándar de Python 3.10+).
+Todas las dependencias están en `requirements.txt` (incluye `cryptography` y `python-dotenv`).
 
 ## Archivos Ignorados (.gitignore)
 
