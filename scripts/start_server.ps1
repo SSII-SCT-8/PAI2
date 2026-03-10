@@ -1,4 +1,4 @@
-# Script para ejecutar solo el servidor.
+﻿# Script para ejecutar solo el servidor.
 # Windows PowerShell
 
 Write-Host ""
@@ -9,7 +9,7 @@ Write-Host "Iniciando servidor..." -ForegroundColor Yellow
 Write-Host ""
 
 $BASE_DIR = Split-Path -Parent $PSScriptRoot
-$TRANSPORT_MODE = if ($env:TRANSPORT_MODE) { $env:TRANSPORT_MODE.ToUpper() } else { "PLAIN" }
+$TRANSPORT_MODE = "TLS"
 
 if (-not (Test-Path "$BASE_DIR\src\server\server.py")) {
     Write-Host "Error: no se encontro src/server/server.py" -ForegroundColor Red
@@ -22,19 +22,17 @@ if (-not (Test-Path "$BASE_DIR\data\server.db")) {
     Write-Host ""
 }
 
+$TLS_CERT_FILE = if ($env:TLS_CERT_FILE) { $env:TLS_CERT_FILE } else { "config/tls/server.crt" }
+$TLS_KEY_FILE = if ($env:TLS_KEY_FILE) { $env:TLS_KEY_FILE } else { "config/tls/server.key" }
+$TLS_CA_FILE = if ($env:TLS_CA_FILE) { $env:TLS_CA_FILE } else { "config/tls/ca.crt" }
+$TLS_MIN_VERSION = if ($env:TLS_MIN_VERSION) { $env:TLS_MIN_VERSION } else { "1.3" }
+
 Write-Host "Iniciando servidor en puerto 9999..." -ForegroundColor Green
 Write-Host "Modo de transporte: $TRANSPORT_MODE" -ForegroundColor Cyan
-
-if ($TRANSPORT_MODE -eq "TLS") {
-    $TLS_CERT_FILE = if ($env:TLS_CERT_FILE) { $env:TLS_CERT_FILE } else { "config/tls/server.crt" }
-    $TLS_KEY_FILE = if ($env:TLS_KEY_FILE) { $env:TLS_KEY_FILE } else { "config/tls/server.key" }
-    $TLS_CA_FILE = if ($env:TLS_CA_FILE) { $env:TLS_CA_FILE } else { "config/tls/ca.crt" }
-    $TLS_MIN_VERSION = if ($env:TLS_MIN_VERSION) { $env:TLS_MIN_VERSION } else { "1.3" }
-    Write-Host "TLS cert: $TLS_CERT_FILE" -ForegroundColor Cyan
-    Write-Host "TLS key:  $TLS_KEY_FILE" -ForegroundColor Cyan
-    Write-Host "TLS ca:   $TLS_CA_FILE" -ForegroundColor Cyan
-    Write-Host "TLS min:  $TLS_MIN_VERSION" -ForegroundColor Cyan
-}
+Write-Host "TLS cert: $TLS_CERT_FILE" -ForegroundColor Cyan
+Write-Host "TLS key:  $TLS_KEY_FILE" -ForegroundColor Cyan
+Write-Host "TLS ca:   $TLS_CA_FILE" -ForegroundColor Cyan
+Write-Host "TLS min:  $TLS_MIN_VERSION" -ForegroundColor Cyan
 
 Write-Host ""
 Write-Host "Para detener el servidor: Ctrl+C" -ForegroundColor Cyan

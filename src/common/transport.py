@@ -1,9 +1,9 @@
-"""Utilidades de transporte para sockets PLAIN/TLS."""
+"""Utilidades de transporte TLS."""
 from pathlib import Path
 import ssl
 
 
-SUPPORTED_TRANSPORT_MODES = {"PLAIN", "TLS"}
+SUPPORTED_TRANSPORT_MODES = {"TLS"}
 _TLS_VERSION_MAP = {
     "1.3": ssl.TLSVersion.TLSv1_3,
 }
@@ -11,7 +11,7 @@ _TLS_VERSION_MAP = {
 
 def normalize_transport_mode(mode: str) -> str:
     """Normaliza y valida el modo de transporte."""
-    normalized = (mode or "PLAIN").strip().upper()
+    normalized = (mode or "TLS").strip().upper()
     if normalized not in SUPPORTED_TRANSPORT_MODES:
         raise ValueError(
             f"TRANSPORT_MODE invalido: {mode}. "

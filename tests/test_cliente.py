@@ -1,68 +1,37 @@
-"""Tests del lado cliente: creacion de mensajes, MAC, nonce unicidad."""
+﻿"""Tests basicos del lado cliente: creacion de mensajes y estado de autenticacion."""
 
 import unittest
-import time
 
 import sys
 from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.common.crypto import (
-    compute_hmac, verify_hmac, generate_key, generate_nonce
-)
-from src.common.protocol import canonicalize_message
+from src.client.api import ClientAPI
 
 
 class TestCliente(unittest.TestCase):
-    def _build_msg(self, msg_type="TX", **extra):
-        msg = {
-            "type": msg_type,
-            "ts": int(time.time() * 1000),
-            "nonce": generate_nonce(),
-            "username": "alice",
-            "payload": extra.get("payload", {"amount": "100"}),
-        }
-        return msg
+    def setUp(self):
+        self.client = ClientAPI(host="127.0.0.1", port=9999)
 
-    def test_fuerza_bruta_login(self):
-        """MAC con clave erronea siempre falla."""
-        key_real = generate_key()
-        msg = self._build_msg("LOGIN", payload={"password": "pass"})
-        mac = compute_hmac(key_real, canonicalize_message(msg))
-        for _ in range(10):
-            key_wrong = generate_key()
-            self.assertFalse(verify_hmac(key_wrong, canonicalize_message(msg), mac))
+    def test_create_message_shape(self):
+        msg = self.client._create_message("PING", "alice", {"x": 1})
+        self.assertEqual(msg["type"], "PING")
+        self.assertEqual(msg["username"], "alice")
+        self.assertEqual(msg["payload"], {"x": 1})
+        self.assertIn("ts", msg)
+        self.assertNotIn("mac", msg)
+        self.assertNotIn("nonce", msg)
 
-    def test_replay_attack(self):
-        """Dos mensajes con distinto nonce producen MAC distinto."""
-        key = generate_key()
-        msg1 = self._build_msg()
-        msg2 = self._build_msg()
-        self.assertNotEqual(msg1["nonce"], msg2["nonce"])
-        mac1 = compute_hmac(key, canonicalize_message(msg1))
-        mac2 = compute_hmac(key, canonicalize_message(msg2))
-        self.assertNotEqual(mac1, mac2)
+    def test_send_tx_requires_auth(self):
+        response = self.client.send_transaction("ES1", "ES2", "10")
+        self.assertFalse(response.get("success"))
+        self.assertIn("No autenticado", response.get("message"))
 
-    def test_inyeccion_sql_login(self):
-        """Caracteres maliciosos en payload no corrompen canonical."""
-        msg = self._build_msg(payload={"password": "'; DROP TABLE users;--"})
-        canonical = canonicalize_message(msg)
-        self.assertIsInstance(canonical, bytes)
-
-    def test_modificar_respuesta(self):
-        """MAC invalido al alterar amount."""
-        key = generate_key()
-        msg = self._build_msg(payload={"amount": "500"})
-        mac = compute_hmac(key, canonicalize_message(msg))
-        msg["payload"]["amount"] = "1"
-        self.assertFalse(verify_hmac(key, canonicalize_message(msg), mac))
-
-    def test_enviar_datos_malformados(self):
-        """canonicalize_message funciona aunque falten campos opcionales."""
-        msg = {"type": "TX"}
-        canonical = canonicalize_message(msg)
-        self.assertIsInstance(canonical, bytes)
+    def test_logout_without_session(self):
+        response = self.client.logout()
+        self.assertFalse(response.get("success"))
+        self.assertIn("No hay sesion", response.get("message"))
 
 
 if __name__ == "__main__":

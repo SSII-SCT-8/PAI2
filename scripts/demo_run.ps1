@@ -1,17 +1,15 @@
-param(
-    [ValidateSet("PLAIN", "TLS")]
-    [string]$Mode = "PLAIN",
+﻿param(
     [switch]$SkipDbReset,
     [switch]$GenerateCerts
 )
 
-# Script de demostracion para Windows PowerShell
+# Script de demostracion para Windows PowerShell (TLS-only)
 # Ejecuta servidor y cliente en ventanas separadas.
 
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host " PAI2 - BYODSEC Road Warrior VPN SSL/TLS" -ForegroundColor Cyan
-Write-Host " Demo dinamica (modo: $Mode)" -ForegroundColor Cyan
+Write-Host " Demo dinamica (modo: TLS)" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -26,34 +24,29 @@ if (-not (Test-Path "$BASE_DIR\src")) {
 # Configuracion de entorno compartida por servidor y cliente
 $env:SERVER_HOST = "127.0.0.1"
 $env:SERVER_PORT = "9999"
-$env:TRANSPORT_MODE = $Mode
+$env:TRANSPORT_MODE = "TLS"
+$env:TLS_CERT_FILE = "config/tls/server.crt"
+$env:TLS_KEY_FILE = "config/tls/server.key"
+$env:TLS_CA_FILE = "config/tls/ca.crt"
+$env:TLS_SERVER_HOSTNAME = "localhost"
+$env:TLS_MIN_VERSION = "1.3"
 
-if ($Mode -eq "TLS") {
-    $env:TLS_CERT_FILE = "config/tls/server.crt"
-    $env:TLS_KEY_FILE = "config/tls/server.key"
-    $env:TLS_CA_FILE = "config/tls/ca.crt"
-    $env:TLS_SERVER_HOSTNAME = "localhost"
-    $env:TLS_MIN_VERSION = "1.3"
-
-    $missingTlsFiles = @()
-    foreach ($tlsFile in @($env:TLS_CERT_FILE, $env:TLS_KEY_FILE, $env:TLS_CA_FILE)) {
-        if (-not (Test-Path (Join-Path $BASE_DIR $tlsFile))) {
-            $missingTlsFiles += $tlsFile
-        }
+$missingTlsFiles = @()
+foreach ($tlsFile in @($env:TLS_CERT_FILE, $env:TLS_KEY_FILE, $env:TLS_CA_FILE)) {
+    if (-not (Test-Path (Join-Path $BASE_DIR $tlsFile))) {
+        $missingTlsFiles += $tlsFile
     }
+}
 
-    if ($GenerateCerts -or $missingTlsFiles.Count -gt 0) {
-        Write-Host "1. Generando certificados TLS..." -ForegroundColor Yellow
-        python "$BASE_DIR\scripts\generate_tls_certs.py" --force
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Error generando certificados TLS." -ForegroundColor Red
-            exit 1
-        }
-    } else {
-        Write-Host "1. Certificados TLS detectados." -ForegroundColor Green
+if ($GenerateCerts -or $missingTlsFiles.Count -gt 0) {
+    Write-Host "1. Generando certificados TLS..." -ForegroundColor Yellow
+    python "$BASE_DIR\scripts\generate_tls_certs.py" --force
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error generando certificados TLS." -ForegroundColor Red
+        exit 1
     }
 } else {
-    Write-Host "1. Modo PLAIN seleccionado (sin TLS)." -ForegroundColor Green
+    Write-Host "1. Certificados TLS detectados." -ForegroundColor Green
 }
 
 if (-not $SkipDbReset) {
@@ -89,13 +82,11 @@ Write-Host "====================================================================
 Write-Host " Demo iniciada exitosamente" -ForegroundColor Green
 Write-Host "======================================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Modo activo: $Mode" -ForegroundColor Cyan
+Write-Host "Modo activo: TLS" -ForegroundColor Cyan
 Write-Host "Host/Puerto: $env:SERVER_HOST`:$env:SERVER_PORT" -ForegroundColor Cyan
-if ($Mode -eq "TLS") {
-    Write-Host "TLS CA:      $env:TLS_CA_FILE" -ForegroundColor Cyan
-    Write-Host "TLS Cert:    $env:TLS_CERT_FILE" -ForegroundColor Cyan
-    Write-Host "TLS Hostname:$env:TLS_SERVER_HOSTNAME" -ForegroundColor Cyan
-}
+Write-Host "TLS CA:      $env:TLS_CA_FILE" -ForegroundColor Cyan
+Write-Host "TLS Cert:    $env:TLS_CERT_FILE" -ForegroundColor Cyan
+Write-Host "TLS Hostname:$env:TLS_SERVER_HOSTNAME" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "USUARIOS DE PRUEBA:" -ForegroundColor Cyan
 Write-Host "  - Usuario: alice    | Password: AliceSecure2024!" -ForegroundColor White
@@ -104,8 +95,8 @@ Write-Host "  - Usuario: admin    | Password: AdminPass2024$" -ForegroundColor W
 Write-Host ""
 Write-Host "INSTRUCCIONES:" -ForegroundColor Cyan
 Write-Host "  1. En el cliente, usa opcion 2 para LOGIN" -ForegroundColor White
-Write-Host "  2. Prueba flujo principal y ataques simulados" -ForegroundColor White
-Write-Host "  3. En modo TLS, el transporte seguro queda activo automaticamente" -ForegroundColor White
+Write-Host "  2. Prueba el flujo principal" -ForegroundColor White
+Write-Host "  3. TLS 1.3 queda activo automaticamente" -ForegroundColor White
 Write-Host ""
 Write-Host "LOGS: revisa logs/server.log y logs/client.log" -ForegroundColor Cyan
 Write-Host ""

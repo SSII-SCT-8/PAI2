@@ -1,6 +1,4 @@
-"""
-Modelos de datos para la comunicación cliente-servidor.
-"""
+﻿"""Modelos de datos para la comunicacion cliente-servidor."""
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 from enum import Enum
@@ -21,33 +19,27 @@ class MessageType(Enum):
 class Message:
     """Estructura base de un mensaje del protocolo."""
     type: str
-    ts: int
-    nonce: str
     username: str
+    ts: int
     payload: Dict[str, Any] = field(default_factory=dict)
-    mac: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convierte el mensaje a diccionario."""
         return {
             "type": self.type,
-            "ts": self.ts,
-            "nonce": self.nonce,
             "username": self.username,
+            "ts": self.ts,
             "payload": self.payload,
-            "mac": self.mac
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Message':
         """Crea un mensaje desde un diccionario."""
         return cls(
             type=data["type"],
-            ts=data["ts"],
-            nonce=data["nonce"],
             username=data["username"],
+            ts=data["ts"],
             payload=data.get("payload", {}),
-            mac=data.get("mac")
         )
 
 
@@ -65,10 +57,10 @@ class LoginPayload:
 
 @dataclass
 class TransactionPayload:
-    """Payload para transacción financiera."""
+    """Payload para transaccion financiera."""
     from_account: str
     to_account: str
-    amount: str  # String para evitar problemas de precisión en JSON
+    amount: str  # String para evitar problemas de precision en JSON
 
 
 @dataclass

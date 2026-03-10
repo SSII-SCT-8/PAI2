@@ -1,5 +1,5 @@
-"""
-Excepciones personalizadas para el sistema de verificación de integridad.
+﻿"""
+Excepciones personalizadas del sistema.
 """
 
 
@@ -8,28 +8,13 @@ class SecurityError(Exception):
     pass
 
 
-class InvalidMACError(SecurityError):
-    """MAC inválido detectado (posible MITM)."""
-    pass
-
-
-class ReplayAttackError(SecurityError):
-    """Nonce repetido detectado (ataque replay)."""
-    pass
-
-
 class RateLimitError(SecurityError):
-    """Excedido el límite de intentos permitidos."""
-    pass
-
-
-class InvalidTimestampError(SecurityError):
-    """Timestamp fuera del rango permitido."""
+    """Excedido el limite de intentos permitidos."""
     pass
 
 
 class AuthenticationError(Exception):
-    """Error de autenticación."""
+    """Error de autenticacion."""
     pass
 
 
@@ -44,5 +29,5 @@ class SessionError(Exception):
 
 
 class ProtocolError(Exception):
-    """Error en el protocolo de comunicación."""
+    """Error en el protocolo de comunicacion."""
     pass
