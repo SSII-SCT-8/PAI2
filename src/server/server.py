@@ -1,5 +1,6 @@
 """Servidor TCP para verificación de integridad en transacciones financieras."""
 import socket
+import ssl
 import threading
 import logging
 import json
@@ -16,7 +17,12 @@ from .config import (
     LOG_LEVEL,
     LOG_TO_FILE,
     LOG_TO_CONSOLE,
-    MAX_CONNECTIONS
+    MAX_CONNECTIONS,
+    TRANSPORT_MODE,
+    TLS_CERT_FILE,
+    TLS_KEY_FILE,
+    TLS_CA_FILE,
+    TLS_MIN_VERSION,
 )
 from .storage import Storage
 from .security import SecurityManager
@@ -29,6 +35,7 @@ from ..common.protocol import (
     create_success_response
 )
 from ..common.crypto import verify_hmac, truncate_for_log
+from ..common.transport import normalize_transport_mode, create_server_ssl_context
 from ..common.models import Message
 from ..common.errors import (
     InvalidMACError,
@@ -67,6 +74,8 @@ class IntegrityServer:
         self.port = port
         self.running = False
         self.server_socket: Optional[socket.socket] = None
+        self.transport_mode = normalize_transport_mode(TRANSPORT_MODE)
+        self.ssl_context: Optional[ssl.SSLContext] = None
         
         self.storage = Storage()
         self.security = SecurityManager(self.storage)
@@ -86,12 +95,21 @@ class IntegrityServer:
     def start(self):
         """Inicia el servidor."""
         try:
+            if self.transport_mode == "TLS":
+                self.ssl_context = create_server_ssl_context(
+                    cert_file=TLS_CERT_FILE,
+                    key_file=TLS_KEY_FILE,
+                    ca_file=TLS_CA_FILE,
+                    min_version=TLS_MIN_VERSION,
+                )
+
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(MAX_CONNECTIONS)
             
             self.running = True
+            logger.info(f"Transporte activo: {self.transport_mode}")
             
             logger.info(f"✓ Servidor de integridad iniciado en {self.host}:{self.port}")
             logger.info(f"✓ Esperando conexiones (máx: {MAX_CONNECTIONS})...")
@@ -112,6 +130,19 @@ class IntegrityServer:
                             continue
                         
                         self.active_connections += 1
+
+                    if self.transport_mode == "TLS":
+                        try:
+                            client_socket = self.ssl_context.wrap_socket(
+                                client_socket,
+                                server_side=True,
+                            )
+                        except ssl.SSLError as e:
+                            logger.warning(f"Handshake TLS fallido desde {client_address}: {e}")
+                            with self.connections_lock:
+                                self.active_connections -= 1
+                            client_socket.close()
+                            continue
                     
                     logger.info(f"Nueva conexión desde {client_address} (activas: {self.active_connections})")
                     
@@ -309,7 +340,7 @@ class IntegrityServer:
 def main():
     """Punto de entrada del servidor."""
     logger.info("=" * 60)
-    logger.info("PAI1 - Servidor de Verificación de Integridad")
+    logger.info("PAI2 - BYODSEC Road Warrior VPN SSL/TLS (Servidor)")
     logger.info("=" * 60)
     
     server = IntegrityServer()

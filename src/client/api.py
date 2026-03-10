@@ -2,6 +2,7 @@
 API de comunicación del cliente con el servidor.
 """
 import socket
+import ssl
 import time
 import logging
 from typing import Dict, Any, Optional, Set
@@ -11,7 +12,11 @@ from .config import (
     SERVER_PORT,
     CONNECT_TIMEOUT,
     MESSAGE_TIMEOUT,
-    MASTER_KEY_BYTES
+    MASTER_KEY_BYTES,
+    TRANSPORT_MODE,
+    TLS_CA_FILE,
+    TLS_MIN_VERSION,
+    TLS_SERVER_HOSTNAME,
 )
 from ..common.protocol import (
     send_message,
@@ -25,6 +30,7 @@ from ..common.crypto import (
 )
 from ..common.models import Message
 from ..common.errors import ProtocolError
+from ..common.transport import normalize_transport_mode, create_client_ssl_context
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +44,8 @@ class ClientAPI:
         self.port = port
         self.sock: Optional[socket.socket] = None
         self.connected = False
+        self.transport_mode = normalize_transport_mode(TRANSPORT_MODE)
+        self.last_connect_error_code: Optional[str] = None
         
         self.username: Optional[str] = None
         self.session_id: Optional[str] = None
@@ -48,16 +56,62 @@ class ClientAPI:
     
     def connect(self) -> bool:
         """Conecta con el servidor."""
+        raw_socket: Optional[socket.socket] = None
         try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.settimeout(CONNECT_TIMEOUT)
-            self.sock.connect((self.host, self.port))
+            self.last_connect_error_code = None
+
+            raw_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            raw_socket.settimeout(CONNECT_TIMEOUT)
+            raw_socket.connect((self.host, self.port))
+
+            if self.transport_mode == "TLS":
+                ssl_context = create_client_ssl_context(
+                    ca_file=TLS_CA_FILE,
+                    min_version=TLS_MIN_VERSION,
+                )
+                self.sock = ssl_context.wrap_socket(
+                    raw_socket,
+                    server_hostname=TLS_SERVER_HOSTNAME,
+                )
+            else:
+                self.sock = raw_socket
+
             self.connected = True
-            logger.info(f"Conectado a {self.host}:{self.port}")
+            logger.info(
+                f"Conectado a {self.host}:{self.port} "
+                f"(transporte={self.transport_mode})"
+            )
             return True
+        except ssl.SSLError as e:
+            self.last_connect_error_code = "TLS_HANDSHAKE_FAILED"
+            logger.error(f"Error TLS conectando: {e}")
+            self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
+            return False
+        except FileNotFoundError as e:
+            self.last_connect_error_code = "TLS_CONFIG_ERROR"
+            logger.error(f"Error de configuracion TLS: {e}")
+            self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
+            return False
+        except ValueError as e:
+            self.last_connect_error_code = "TLS_CONFIG_ERROR"
+            logger.error(f"Error de configuracion de transporte: {e}")
+            self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
+            return False
         except Exception as e:
             logger.error(f"Error conectando: {e}")
             self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
             return False
     
     def disconnect(self):
@@ -80,6 +134,30 @@ class ClientAPI:
             nonce = generate_nonce()
         self._used_nonces.add(nonce)
         return nonce
+
+    def _not_connected_response(self) -> Dict[str, Any]:
+        """Respuesta estandar cuando no hay conexion activa."""
+        response: Dict[str, Any] = {
+            "success": False,
+            "message": "No conectado al servidor",
+        }
+        if self.last_connect_error_code:
+            response["code"] = self.last_connect_error_code
+        return response
+
+    def _transport_error_response(self, error: Exception) -> Dict[str, Any]:
+        """Normaliza errores de transporte para respuestas al usuario."""
+        if self.transport_mode == "PLAIN" and isinstance(
+            error,
+            (ProtocolError, ssl.SSLError, OSError, ConnectionResetError, BrokenPipeError),
+        ):
+            return {
+                "success": False,
+                "code": "TLS_REQUIRED",
+                "message": "El servidor requiere TLS para esta conexion",
+            }
+
+        return {"success": False, "message": str(error)}
     
     def _create_message(
         self,
@@ -107,7 +185,7 @@ class ClientAPI:
     def register(self, username: str, password: str) -> Dict[str, Any]:
         """Registra un nuevo usuario."""
         if not self.connected:
-            return {"success": False, "message": "No conectado al servidor"}
+            return self._not_connected_response()
         
         # REGISTER no lleva MAC (el usuario aún no existe)
         msg = self._create_message(
@@ -132,12 +210,12 @@ class ClientAPI:
         
         except Exception as e:
             logger.error(f"Error en REGISTER: {e}")
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
     def login(self, username: str, password: str) -> Dict[str, Any]:
         """Inicia sesión."""
         if not self.connected:
-            return {"success": False, "message": "No conectado al servidor"}
+            return self._not_connected_response()
         
         self.user_key, self.user_key_salt = derive_user_key(
             MASTER_KEY_BYTES,
@@ -168,7 +246,7 @@ class ClientAPI:
         except Exception as e:
             logger.error(f"Error en LOGIN: {e}")
             self.user_key = None
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
     def send_transaction(
         self,
@@ -201,7 +279,7 @@ class ClientAPI:
         
         except Exception as e:
             logger.error(f"Error en TX: {e}")
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
     def logout(self) -> Dict[str, Any]:
         """Cierra sesión."""
@@ -228,7 +306,7 @@ class ClientAPI:
         
         except Exception as e:
             logger.error(f"Error en LOGOUT: {e}")
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
     # ==================== SIMULACIÓN DE ATAQUES ====================
     
