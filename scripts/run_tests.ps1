@@ -3,7 +3,7 @@
 
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Cyan
-Write-Host " PAI1 - Ejecutando Suite de Tests" -ForegroundColor Cyan
+Write-Host " PAI2 - Ejecutando Suite de Tests" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host ""
 

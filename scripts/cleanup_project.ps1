@@ -3,7 +3,7 @@
 
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Cyan
-Write-Host " PAI1 - Limpieza de Proyecto (Carpetas Obsoletas)" -ForegroundColor Cyan
+Write-Host " PAI2 - Limpieza de Proyecto (Carpetas Obsoletas)" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host ""
 

@@ -1,4 +1,4 @@
-# Estructura del Proyecto PAI1
+# Estructura del Proyecto PAI2
 
 ## Visión General
 
@@ -7,7 +7,7 @@ Este proyecto implementa un sistema cliente-servidor de verificación de integri
 ## Árbol de Directorios
 
 ```
-PAI1/
+PAI2/
 │
 ├── src/                          # Código fuente principal
 │   ├── common/                   # Módulos compartidos entre cliente y servidor
