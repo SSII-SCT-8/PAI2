@@ -40,7 +40,7 @@ class InteractiveClient:
     def show_banner(self):
         """Muestra el banner de bienvenida."""
         print("\n" + "=" * 70)
-        print(" PAI1 - Sistema de Verificación de Integridad para Entidad Financiera")
+        print(" PAI2 - BYODSEC Road Warrior VPN SSL/TLS para Universidad Publica")
         print("=" * 70)
         print(" Protección implementada:")
         print("   ✓ HMAC-SHA256 para integridad (clave 256 bits)")

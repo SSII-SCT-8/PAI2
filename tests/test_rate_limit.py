@@ -109,6 +109,33 @@ class TestRateLimiting(unittest.TestCase):
         except RateLimitError:
             self.fail("Bob no debería estar bloqueado")
 
+    def test_backoff_increases_on_repeated_blocked_attempts(self):
+        """El backoff debe crecer en bloqueos consecutivos (1s, 2s, 4s...)."""
+        username = "alice"
+        ip = "192.168.1.100"
+
+        for _ in range(MAX_LOGIN_ATTEMPTS):
+            self.storage.record_login_attempt(username, ip, success=False)
+
+        backoffs = []
+        for _ in range(3):
+            with self.assertRaises(RateLimitError) as ctx:
+                self.security.check_rate_limit(username, ip)
+            backoffs.append(self._extract_backoff_seconds(str(ctx.exception)))
+
+        self.assertEqual(backoffs, [1, 2, 4])
+
+    @staticmethod
+    def _extract_backoff_seconds(error_message: str) -> int:
+        prefix = "Intente de nuevo en "
+        suffix = " segundos."
+        start = error_message.find(prefix)
+        end = error_message.find(suffix)
+        if start == -1 or end == -1:
+            raise AssertionError(f"Formato de mensaje inesperado: {error_message}")
+        value = error_message[start + len(prefix):end].strip()
+        return int(value)
+
 
 class TestBruteForceScenario(unittest.TestCase):
     """Tests de escenarios de brute force."""

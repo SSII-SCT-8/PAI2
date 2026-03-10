@@ -35,6 +35,8 @@ venv.bak/
 *.db
 temp_passwords.txt
 logs/*.log
+config/tls/*
+!config/tls/README.md
 
 # Carpetas obsoletas (migrado a src/)
 cliente/

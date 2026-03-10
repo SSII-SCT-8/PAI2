@@ -3,7 +3,7 @@
 
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Yellow
-Write-Host " PAI1 - Limpieza de datos" -ForegroundColor Yellow
+Write-Host " PAI2 - Limpieza de datos" -ForegroundColor Yellow
 Write-Host "======================================================================" -ForegroundColor Yellow
 Write-Host ""
 

@@ -1,7 +1,8 @@
-"""
-API de comunicación del cliente con el servidor.
+﻿"""
+API de comunicaciÃ³n del cliente con el servidor.
 """
 import socket
+import ssl
 import time
 import logging
 from typing import Dict, Any, Optional, Set
@@ -11,7 +12,11 @@ from .config import (
     SERVER_PORT,
     CONNECT_TIMEOUT,
     MESSAGE_TIMEOUT,
-    MASTER_KEY_BYTES
+    MASTER_KEY_BYTES,
+    TRANSPORT_MODE,
+    TLS_CA_FILE,
+    TLS_MIN_VERSION,
+    TLS_SERVER_HOSTNAME,
 )
 from ..common.protocol import (
     send_message,
@@ -25,19 +30,22 @@ from ..common.crypto import (
 )
 from ..common.models import Message
 from ..common.errors import ProtocolError
+from ..common.transport import normalize_transport_mode, create_client_ssl_context
 
 
 logger = logging.getLogger(__name__)
 
 
 class ClientAPI:
-    """Cliente para comunicación con el servidor de integridad."""
+    """Cliente para comunicaciÃ³n con el servidor de integridad."""
     
     def __init__(self, host: str = SERVER_HOST, port: int = SERVER_PORT):
         self.host = host
         self.port = port
         self.sock: Optional[socket.socket] = None
         self.connected = False
+        self.transport_mode = normalize_transport_mode(TRANSPORT_MODE)
+        self.last_connect_error_code: Optional[str] = None
         
         self.username: Optional[str] = None
         self.session_id: Optional[str] = None
@@ -48,16 +56,62 @@ class ClientAPI:
     
     def connect(self) -> bool:
         """Conecta con el servidor."""
+        raw_socket: Optional[socket.socket] = None
         try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.settimeout(CONNECT_TIMEOUT)
-            self.sock.connect((self.host, self.port))
+            self.last_connect_error_code = None
+
+            raw_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            raw_socket.settimeout(CONNECT_TIMEOUT)
+            raw_socket.connect((self.host, self.port))
+
+            if self.transport_mode == "TLS":
+                ssl_context = create_client_ssl_context(
+                    ca_file=TLS_CA_FILE,
+                    min_version=TLS_MIN_VERSION,
+                )
+                self.sock = ssl_context.wrap_socket(
+                    raw_socket,
+                    server_hostname=TLS_SERVER_HOSTNAME,
+                )
+            else:
+                self.sock = raw_socket
+
             self.connected = True
-            logger.info(f"Conectado a {self.host}:{self.port}")
+            logger.info(
+                f"Conectado a {self.host}:{self.port} "
+                f"(transporte={self.transport_mode})"
+            )
             return True
+        except ssl.SSLError as e:
+            self.last_connect_error_code = "TLS_HANDSHAKE_FAILED"
+            logger.error(f"Error TLS conectando: {e}")
+            self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
+            return False
+        except FileNotFoundError as e:
+            self.last_connect_error_code = "TLS_CONFIG_ERROR"
+            logger.error(f"Error de configuracion TLS: {e}")
+            self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
+            return False
+        except ValueError as e:
+            self.last_connect_error_code = "TLS_CONFIG_ERROR"
+            logger.error(f"Error de configuracion de transporte: {e}")
+            self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
+            return False
         except Exception as e:
             logger.error(f"Error conectando: {e}")
             self.connected = False
+            self.sock = None
+            if raw_socket:
+                raw_socket.close()
             return False
     
     def disconnect(self):
@@ -74,13 +128,74 @@ class ClientAPI:
         logger.info("Desconectado del servidor")
     
     def _generate_unique_nonce(self) -> str:
-        """Genera un nonce único no usado anteriormente."""
+        """Genera un nonce Ãºnico no usado anteriormente."""
         nonce = generate_nonce()
         while nonce in self._used_nonces:
             nonce = generate_nonce()
         self._used_nonces.add(nonce)
         return nonce
-    
+
+    def _not_connected_response(self) -> Dict[str, Any]:
+        """Respuesta estandar cuando no hay conexion activa."""
+        response: Dict[str, Any] = {
+            "success": False,
+            "message": "No conectado al servidor",
+        }
+        if self.last_connect_error_code:
+            response["code"] = self.last_connect_error_code
+        return response
+
+    def _transport_error_response(self, error: Exception) -> Dict[str, Any]:
+        """Normaliza errores de transporte para respuestas al usuario."""
+        if self._is_tls_required_error(error):
+            return {
+                "success": False,
+                "code": "TLS_REQUIRED",
+                "message": "El servidor requiere TLS para esta conexion",
+            }
+
+        return {"success": False, "message": str(error)}
+
+    def _is_tls_required_error(self, error: Exception) -> bool:
+        """Determina si el error sugiere mismatch PLAIN cliente vs servidor TLS."""
+        if self.transport_mode != "PLAIN":
+            return False
+
+        if isinstance(error, ssl.SSLError):
+            return True
+
+        if isinstance(error, ProtocolError):
+            message = str(error).lower()
+            if "timeout" in message:
+                return False
+            signatures = (
+                "wrong version number",
+                "tlsv1 alert",
+                "ssl:",
+                "sslv3 alert",
+                "unknown protocol",
+                "cerrada por el peer",
+                "connection reset by peer",
+                "10054",
+                "host remoto",
+                "interrupcion de una conexion existente",
+                "interrupción de una conexión existente",
+            )
+            return any(signature in message for signature in signatures)
+
+        if isinstance(error, OSError):
+            # Evita falsos positivos: un OSError de red no implica TLS_REQUIRED.
+            message = str(error).lower()
+            tls_signatures = (
+                "wrong version number",
+                "tlsv1 alert",
+                "ssl:",
+                "sslv3 alert",
+                "unknown protocol",
+            )
+            return any(signature in message for signature in tls_signatures)
+
+        return False    
     def _create_message(
         self,
         msg_type: str,
@@ -107,9 +222,9 @@ class ClientAPI:
     def register(self, username: str, password: str) -> Dict[str, Any]:
         """Registra un nuevo usuario."""
         if not self.connected:
-            return {"success": False, "message": "No conectado al servidor"}
+            return self._not_connected_response()
         
-        # REGISTER no lleva MAC (el usuario aún no existe)
+        # REGISTER no lleva MAC (el usuario aÃºn no existe)
         msg = self._create_message(
             "REGISTER",
             username,
@@ -132,12 +247,12 @@ class ClientAPI:
         
         except Exception as e:
             logger.error(f"Error en REGISTER: {e}")
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
     def login(self, username: str, password: str) -> Dict[str, Any]:
-        """Inicia sesión."""
+        """Inicia sesiÃ³n."""
         if not self.connected:
-            return {"success": False, "message": "No conectado al servidor"}
+            return self._not_connected_response()
         
         self.user_key, self.user_key_salt = derive_user_key(
             MASTER_KEY_BYTES,
@@ -168,7 +283,7 @@ class ClientAPI:
         except Exception as e:
             logger.error(f"Error en LOGIN: {e}")
             self.user_key = None
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
     def send_transaction(
         self,
@@ -176,7 +291,7 @@ class ClientAPI:
         to_account: str,
         amount: str
     ) -> Dict[str, Any]:
-        """Envía una transacción."""
+        """EnvÃ­a una transacciÃ³n."""
         if not self.username or not self.user_key:
             return {"success": False, "message": "No autenticado"}
         
@@ -195,18 +310,18 @@ class ClientAPI:
             response = receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
             
             if response.get("success"):
-                logger.info(f"Transacción enviada: {from_account} -> {to_account}: {amount}")
+                logger.info(f"TransacciÃ³n enviada: {from_account} -> {to_account}: {amount}")
             
             return response
         
         except Exception as e:
             logger.error(f"Error en TX: {e}")
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
     def logout(self) -> Dict[str, Any]:
-        """Cierra sesión."""
+        """Cierra sesiÃ³n."""
         if not self.username or not self.session_id:
-            return {"success": False, "message": "No hay sesión activa"}
+            return {"success": False, "message": "No hay sesiÃ³n activa"}
         
         msg = self._create_message(
             "LOGOUT",
@@ -228,9 +343,9 @@ class ClientAPI:
         
         except Exception as e:
             logger.error(f"Error en LOGOUT: {e}")
-            return {"success": False, "message": str(e)}
+            return self._transport_error_response(e)
     
-    # ==================== SIMULACIÓN DE ATAQUES ====================
+    # ==================== SIMULACIÃ“N DE ATAQUES ====================
     
     def send_replay_attack(
         self,
@@ -254,20 +369,20 @@ class ClientAPI:
             }
         )
         
-        # Remover el nonce del set local para permitir reenvío
+        # Remover el nonce del set local para permitir reenvÃ­o
         if msg["nonce"] in self._used_nonces:
             self._used_nonces.remove(msg["nonce"])
         
         try:
-            # Primera vez - debería funcionar
-            logger.warning("⚠️  SIMULACIÓN DE ATAQUE: Enviando mensaje original...")
+            # Primera vez - deberÃ­a funcionar
+            logger.warning("âš ï¸  SIMULACIÃ“N DE ATAQUE: Enviando mensaje original...")
             send_message(self.sock, msg)
             resp1 = receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
             
             time.sleep(0.5)
             
-            # Segunda vez - debería ser rechazado (replay)
-            logger.warning("⚠️  SIMULACIÓN DE ATAQUE: Reenviando mismo mensaje (REPLAY)...")
+            # Segunda vez - deberÃ­a ser rechazado (replay)
+            logger.warning("âš ï¸  SIMULACIÃ“N DE ATAQUE: Reenviando mismo mensaje (REPLAY)...")
             send_message(self.sock, msg)
             resp2 = receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
             
@@ -289,7 +404,7 @@ class ClientAPI:
         if not self.username or not self.user_key:
             return {"success": False, "message": "No autenticado"}
         
-        # Crear mensaje legítimo
+        # Crear mensaje legÃ­timo
         msg = self._create_message(
             "TX",
             self.username,
@@ -300,9 +415,9 @@ class ClientAPI:
             }
         )
         
-        # Modificar payload DESPUÉS de calcular MAC (simula MITM)
+        # Modificar payload DESPUÃ‰S de calcular MAC (simula MITM)
         logger.warning(
-            f"⚠️  SIMULACIÓN DE ATAQUE MITM: "
+            f"âš ï¸  SIMULACIÃ“N DE ATAQUE MITM: "
             f"modificando amount de {amount} a {tampered_amount}"
         )
         msg["payload"]["amount"] = tampered_amount
@@ -315,3 +430,4 @@ class ClientAPI:
         except Exception as e:
             logger.error(f"Error en MITM attack: {e}")
             return {"success": False, "message": str(e)}
+

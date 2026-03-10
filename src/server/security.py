@@ -59,6 +59,10 @@ class SecurityManager:
         
         if failed_count >= MAX_LOGIN_ATTEMPTS:
             backoff_seconds = BACKOFF_BASE ** (failed_count - MAX_LOGIN_ATTEMPTS)
+
+            # Registrar también el intento bloqueado para que el backoff
+            # siga creciendo en reintentos consecutivos durante el bloqueo.
+            self.storage.record_login_attempt(username, ip_address, success=False)
             
             logger.warning(
                 f"RATE LIMIT: usuario '{username}' desde {ip_address} "
