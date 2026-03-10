@@ -1,5 +1,7 @@
 """Genera una CA local y un certificado de servidor para TLS 1.3.
 
+Por defecto usa criptografia de curva eliptica (ECDSA + P-256).
+
 Uso:
     python scripts/generate_tls_certs.py --force
 """
@@ -9,16 +11,25 @@ import argparse
 import ipaddress
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any, Literal
 
 try:
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.hazmat.primitives.asymmetric import ec, rsa
     from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 except ImportError as exc:
     raise SystemExit(
         "Falta dependencia 'cryptography'. Ejecuta: python -m pip install -r requirements.txt"
     ) from exc
+
+SUPPORTED_ALGORITHMS = ("ec", "rsa")
+_EC_CURVE_MAP: dict[str, type[ec.EllipticCurve]] = {
+    "secp256r1": ec.SECP256R1,
+    "prime256v1": ec.SECP256R1,
+    "secp384r1": ec.SECP384R1,
+    "secp521r1": ec.SECP521R1,
+}
 
 
 def _write_pem(path: Path, data: bytes, force: bool) -> None:
@@ -37,9 +48,48 @@ def _build_name(common_name: str, organization: str) -> x509.Name:
     )
 
 
-def _generate_ca(organization: str, days: int) -> tuple[rsa.RSAPrivateKey, x509.Certificate]:
+def _normalize_algorithm(algorithm: str) -> Literal["ec", "rsa"]:
+    normalized = (algorithm or "ec").strip().lower()
+    if normalized == "ec":
+        return "ec"
+    if normalized == "rsa":
+        return "rsa"
+    raise ValueError(
+        f"--algorithm invalido: {algorithm}. Valores permitidos: {SUPPORTED_ALGORITHMS}"
+    )
+
+
+def _resolve_ec_curve(curve_name: str) -> ec.EllipticCurve:
+    normalized = (curve_name or "secp256r1").strip().lower()
+    curve_cls = _EC_CURVE_MAP.get(normalized)
+    if curve_cls is None:
+        allowed = ", ".join(sorted(_EC_CURVE_MAP.keys()))
+        raise ValueError(
+            f"--ec-curve invalida: {curve_name}. Valores permitidos: {allowed}"
+        )
+    return curve_cls()
+
+
+def _generate_private_key(
+    algorithm: Literal["ec", "rsa"],
+    role: Literal["ca", "server"],
+    ec_curve: ec.EllipticCurve,
+) -> Any:
+    if algorithm == "ec":
+        return ec.generate_private_key(ec_curve)
+
+    key_size = 4096 if role == "ca" else 3072
+    return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
+
+
+def _generate_ca(
+    organization: str,
+    days: int,
+    algorithm: Literal["ec", "rsa"],
+    ec_curve: ec.EllipticCurve,
+) -> tuple[Any, x509.Certificate]:
     now = datetime.now(timezone.utc)
-    ca_key = rsa.generate_private_key(public_exponent=65537, key_size=4096)
+    ca_key = _generate_private_key(algorithm, role="ca", ec_curve=ec_curve)
     ca_subject = _build_name("PAI2 Local Root CA", organization)
     builder = (
         x509.CertificateBuilder()
@@ -71,13 +121,15 @@ def _generate_ca(organization: str, days: int) -> tuple[rsa.RSAPrivateKey, x509.
 
 
 def _generate_server_cert(
-    ca_key: rsa.RSAPrivateKey,
+    ca_key: Any,
     ca_cert: x509.Certificate,
     server_cn: str,
     days: int,
-) -> tuple[rsa.RSAPrivateKey, x509.Certificate]:
+    algorithm: Literal["ec", "rsa"],
+    ec_curve: ec.EllipticCurve,
+) -> tuple[Any, x509.Certificate]:
     now = datetime.now(timezone.utc)
-    server_key = rsa.generate_private_key(public_exponent=65537, key_size=3072)
+    server_key = _generate_private_key(algorithm, role="server", ec_curve=ec_curve)
     server_subject = _build_name(server_cn, "Universidad Publica")
     dns_names = {"localhost", server_cn}
     san = x509.SubjectAlternativeName(
@@ -96,7 +148,7 @@ def _generate_server_cert(
         .add_extension(
             x509.KeyUsage(
                 digital_signature=True,
-                key_encipherment=True,
+                key_encipherment=(algorithm == "rsa"),
                 content_commitment=False,
                 data_encipherment=False,
                 key_agreement=False,
@@ -146,6 +198,16 @@ def _parse_args() -> argparse.Namespace:
         help="Validez de los certificados en dias (por defecto: 825)",
     )
     parser.add_argument(
+        "--algorithm",
+        default="ec",
+        help="Algoritmo para claves de CA/server: ec (default) o rsa",
+    )
+    parser.add_argument(
+        "--ec-curve",
+        default="secp256r1",
+        help="Curva EC cuando --algorithm=ec (default: secp256r1)",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Sobrescribe archivos existentes",
@@ -155,15 +217,28 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
+    try:
+        algorithm = _normalize_algorithm(args.algorithm)
+        ec_curve = _resolve_ec_curve(args.ec_curve)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+
     out_dir: Path = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    ca_key, ca_cert = _generate_ca(args.organization, args.days)
+    ca_key, ca_cert = _generate_ca(
+        organization=args.organization,
+        days=args.days,
+        algorithm=algorithm,
+        ec_curve=ec_curve,
+    )
     server_key, server_cert = _generate_server_cert(
         ca_key=ca_key,
         ca_cert=ca_cert,
         server_cn=args.server_cn,
         days=args.days,
+        algorithm=algorithm,
+        ec_curve=ec_curve,
     )
 
     ca_key_path = out_dir / "ca.key"
@@ -205,6 +280,9 @@ def main() -> None:
     print(f"  - CA key:      {ca_key_path}")
     print(f"  - Server cert: {server_cert_path}")
     print(f"  - Server key:  {server_key_path}")
+    print(f"  - Algorithm:   {algorithm.upper()}")
+    if algorithm == "ec":
+        print(f"  - EC curve:    {ec_curve.name}")
     print("")
     print("SAN incluidos en server.crt: localhost, 127.0.0.1 y CN definido.")
     print("Usa TRANSPORT_MODE=TLS en cliente y servidor para activar TLS.")

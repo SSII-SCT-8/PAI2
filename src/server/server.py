@@ -22,6 +22,7 @@ from .config import (
     TLS_KEY_FILE,
     TLS_CA_FILE,
     TLS_MIN_VERSION,
+    TLS_ECDH_CURVE,
 )
 from .storage import Storage
 from .security import SecurityManager
@@ -82,6 +83,7 @@ class IntegrityServer:
                 key_file=TLS_KEY_FILE,
                 ca_file=TLS_CA_FILE,
                 min_version=TLS_MIN_VERSION,
+                ecdh_curve=TLS_ECDH_CURVE,
             )
 
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -91,6 +93,7 @@ class IntegrityServer:
 
             self.running = True
             logger.info(f"Transporte activo: {self.transport_mode}")
+            logger.info(f"Curva ECDH activa: {TLS_ECDH_CURVE}")
             logger.info(f"Servidor iniciado en {self.host}:{self.port}")
             logger.info(f"Esperando conexiones (max: {MAX_CONNECTIONS})...")
 
@@ -198,8 +201,14 @@ class IntegrityServer:
                 try:
                     msg_dict = receive_message(client_socket, timeout=30.0)
                 except ProtocolError as e:
-                    if "cerrada" in str(e).lower() or "closed" in str(e).lower():
+                    error_text = str(e).lower()
+                    if "cerrada" in error_text or "closed" in error_text:
                         break
+                    if "timeout" in error_text:
+                        # Timeout de inactividad: no enviar respuesta para no
+                        # desincronizar el patron request/response del cliente.
+                        logger.debug(f"Timeout de lectura desde {client_ip}: {e}")
+                        continue
                     logger.warning(f"Error de protocolo desde {client_ip}: {e}")
                     error_resp = create_error_response("PROTOCOL_ERROR", str(e))
                     send_message(client_socket, error_resp)

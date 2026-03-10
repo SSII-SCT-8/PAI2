@@ -36,8 +36,9 @@ def create_server_ssl_context(
     key_file: Path,
     ca_file: Path,
     min_version: str,
+    ecdh_curve: str | None = None,
 ) -> ssl.SSLContext:
-    """Crea contexto TLS del servidor, forzando la version minima indicada."""
+    """Crea contexto TLS del servidor, forzando TLS y curva ECDH opcional."""
     if not cert_file.exists():
         raise FileNotFoundError(f"No existe TLS_CERT_FILE: {cert_file}")
     if not key_file.exists():
@@ -53,6 +54,16 @@ def create_server_ssl_context(
     context.options |= ssl.OP_NO_COMPRESSION
     context.load_cert_chain(certfile=str(cert_file), keyfile=str(key_file))
     context.load_verify_locations(cafile=str(ca_file))
+    if ecdh_curve:
+        try:
+            context.set_ecdh_curve(ecdh_curve)
+        except AttributeError as exc:
+            raise ValueError(
+                "El runtime actual no soporta configurar TLS_ECDH_CURVE "
+                f"({ecdh_curve})"
+            ) from exc
+        except (ssl.SSLError, ValueError) as exc:
+            raise ValueError(f"TLS_ECDH_CURVE invalido o no soportado: {ecdh_curve}") from exc
     return context
 
 

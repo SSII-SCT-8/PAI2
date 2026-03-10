@@ -24,6 +24,7 @@ TLS_CERT_FILE = Path(os.getenv("TLS_CERT_FILE", str(CONFIG_DIR / "tls" / "server
 TLS_KEY_FILE = Path(os.getenv("TLS_KEY_FILE", str(CONFIG_DIR / "tls" / "server.key")))
 TLS_CA_FILE = Path(os.getenv("TLS_CA_FILE", str(CONFIG_DIR / "tls" / "ca.crt")))
 TLS_MIN_VERSION = os.getenv("TLS_MIN_VERSION", "1.3")
+TLS_ECDH_CURVE = os.getenv("TLS_ECDH_CURVE", "prime256v1")
 
 MAX_LOGIN_ATTEMPTS = 5
 RATE_LIMIT_WINDOW = 300       # 5 min

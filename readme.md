@@ -46,6 +46,7 @@ Demo automatizada (Windows):
 ## Seguridad vigente
 
 - TLS 1.3 obligatorio con validacion de certificado.
+- Certificados TLS generados con ECC (ECDSA P-256 por defecto).
 - Passwords almacenadas con `PBKDF2-HMAC-SHA256` + `salt` aleatorio (seguridad en reposo).
 - Rate limiting y backoff exponencial para login.
 - Gestion de sesiones con expiracion.
