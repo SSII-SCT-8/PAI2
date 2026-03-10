@@ -1,4 +1,4 @@
-# PAI1 - Verificadores de Integridad en Transmisión Punto-Punto
+# PAI2 - BYODSEC Road Warrior VPN SSL/TLS
 
 ## 📋 Descripción
 
@@ -36,7 +36,7 @@ Sistema cliente-servidor de verificación de integridad para transacciones finan
 ## 🏗️ Arquitectura
 
 ```
-PAI1/
+PAI2/
 ├── src/
 │   ├── common/           # Código compartido
 │   │   ├── crypto.py     # HMAC, KDF, comparaciones seguras
@@ -155,7 +155,7 @@ Ver: [`src/common/crypto.py`](src/common/crypto.py) para detalles de implementac
 ```powershell
 # 1. Clonar repositorio
 git clone <repo-url>
-cd PAI1
+cd PAI2
 
 # 2. (Opcional) Crear entorno virtual
 python -m venv venv
@@ -171,10 +171,26 @@ python config\seed_database.py
 .\scripts\demo_run.ps1
 ```
 
-Este script:
-1. Inicializa la base de datos con usuarios de prueba
-2. Inicia el servidor en una ventana nueva
-3. Inicia el cliente en otra ventana nueva
+Modos dinámicos del demo:
+
+```powershell
+# Demo en modo PLAIN (por defecto)
+.\scripts\demo_run.ps1 -Mode PLAIN
+
+# Demo en modo TLS (genera certificados si faltan)
+.\scripts\demo_run.ps1 -Mode TLS
+
+# Forzar regeneración de certificados TLS
+.\scripts\demo_run.ps1 -Mode TLS -GenerateCerts
+
+# Mantener la base de datos actual (sin reiniciar)
+.\scripts\demo_run.ps1 -Mode TLS -SkipDbReset
+```
+
+El script de demo:
+1. Configura automáticamente `TRANSPORT_MODE` para servidor y cliente.
+2. En modo `TLS`, prepara `TLS_CERT_FILE`, `TLS_KEY_FILE`, `TLS_CA_FILE`, `TLS_SERVER_HOSTNAME` y `TLS_MIN_VERSION`.
+3. Inicia servidor y cliente en ventanas separadas.
 
 ### Ejecución con Scripts Individuales
 
@@ -201,7 +217,7 @@ python -m src.server.server
 
 **Terminal 2 - Cliente (nueva terminal):**
 ```powershell
-cd "C:\Users\Juan\Desktop\Carrera\4º\2º Cuatri\SSII\Mios\Github\PAI1"
+cd "C:\Users\Juan\Desktop\Carrera\4º\2º Cuatri\SSII\Mios\Github\PAI2"
 python -m src.client.client
 ```
 
