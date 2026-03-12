@@ -8,11 +8,17 @@ class MessageType(Enum):
     """Tipos de mensajes del protocolo."""
     REGISTER = "REGISTER"
     LOGIN = "LOGIN"
-    TX = "TX"
+    MSG = "MSG"
+    HISTORY = "HISTORY"
+    TX = "TX"  # Compatibilidad con clientes legacy.
     LOGOUT = "LOGOUT"
     PING = "PING"
     RESPONSE = "RESPONSE"
     ERROR = "ERROR"
+
+
+MESSAGE_MIN_LENGTH = 1
+MESSAGE_MAX_LENGTH = 144
 
 
 @dataclass
@@ -56,11 +62,15 @@ class LoginPayload:
 
 
 @dataclass
-class TransactionPayload:
-    """Payload para transaccion financiera."""
-    from_account: str
-    to_account: str
-    amount: str  # String para evitar problemas de precision en JSON
+class MessagePayload:
+    """Payload para mensaje de texto."""
+    text: str
+
+
+@dataclass
+class HistoryPayload:
+    """Payload para consulta de historial."""
+    limit: Optional[int] = None
 
 
 @dataclass

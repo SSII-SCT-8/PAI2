@@ -12,7 +12,7 @@ from src.client.api import ClientAPI
 class TestReplayRemoved(unittest.TestCase):
     def test_client_messages_do_not_include_nonce(self):
         client = ClientAPI(host="127.0.0.1", port=9999)
-        msg = client._create_message("TX", "alice", {"amount": "10"})
+        msg = client._create_message("MSG", "alice", {"text": "hola"})
         self.assertNotIn("nonce", msg)
 
 

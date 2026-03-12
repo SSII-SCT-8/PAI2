@@ -20,6 +20,7 @@ from .config import (
 from ..common.protocol import send_message, receive_message
 from ..common.errors import ProtocolError
 from ..common.transport import normalize_transport_mode, create_client_ssl_context
+from ..common.models import MESSAGE_MIN_LENGTH, MESSAGE_MAX_LENGTH
 
 
 logger = logging.getLogger(__name__)
@@ -188,17 +189,41 @@ class ClientAPI:
         to_account: str,
         amount: str,
     ) -> Dict[str, Any]:
-        """Envia una transaccion."""
+        """Compatibilidad legacy: encapsula una TX como mensaje de texto."""
+        legacy_text = f"TX {from_account}->{to_account}: {amount}"
+        return self.send_message_text(legacy_text)
+
+    def send_message_text(self, text: str) -> Dict[str, Any]:
+        """Envia un mensaje de texto (1..144 caracteres)."""
         if not self.username or not self.session_id:
             return {"success": False, "message": "No autenticado"}
 
+        if not isinstance(text, str):
+            return {
+                "success": False,
+                "code": "EMPTY_MESSAGE",
+                "message": "El mensaje debe ser texto",
+            }
+
+        normalized = text.strip()
+        if len(normalized) < MESSAGE_MIN_LENGTH:
+            return {
+                "success": False,
+                "code": "EMPTY_MESSAGE",
+                "message": "El mensaje no puede estar vacio",
+            }
+        if len(normalized) > MESSAGE_MAX_LENGTH:
+            return {
+                "success": False,
+                "code": "MSG_TOO_LONG",
+                "message": f"El mensaje no puede superar {MESSAGE_MAX_LENGTH} caracteres",
+            }
+
         msg = self._create_message(
-            "TX",
+            "MSG",
             self.username,
             {
-                "from_account": from_account,
-                "to_account": to_account,
-                "amount": amount,
+                "text": normalized,
             },
         )
 
@@ -207,14 +232,30 @@ class ClientAPI:
             response = receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
 
             if response.get("success"):
-                logger.info(
-                    f"Transaccion enviada: {from_account} -> {to_account}: {amount}"
-                )
+                logger.info(f"Mensaje enviado por '{self.username}'")
 
             return response
 
         except Exception as e:
-            logger.error(f"Error en TX: {e}")
+            logger.error(f"Error en MSG: {e}")
+            return self._transport_error_response(e)
+
+    def get_history(self, limit: Optional[int] = None) -> Dict[str, Any]:
+        """Recupera historial de mensajes del usuario autenticado."""
+        if not self.username or not self.session_id:
+            return {"success": False, "message": "No autenticado"}
+
+        payload: Dict[str, Any] = {}
+        if limit is not None:
+            payload["limit"] = limit
+
+        msg = self._create_message("HISTORY", self.username, payload)
+
+        try:
+            send_message(self.sock, msg)
+            return receive_message(self.sock, timeout=MESSAGE_TIMEOUT)
+        except Exception as e:
+            logger.error(f"Error en HISTORY: {e}")
             return self._transport_error_response(e)
 
     def logout(self) -> Dict[str, Any]:

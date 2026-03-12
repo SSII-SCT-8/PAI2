@@ -88,6 +88,27 @@ class Storage:
 
             cursor.execute(
                 """
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL,
+                    message_text TEXT NOT NULL,
+                    ts INTEGER NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    CHECK(length(message_text) >= 1),
+                    CHECK(length(message_text) <= 144)
+                )
+                """
+            )
+
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_messages_username_ts
+                ON messages(username, ts DESC)
+                """
+            )
+
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS login_attempts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT NOT NULL,
@@ -340,6 +361,56 @@ class Storage:
             )
 
             return [dict(row) for row in cursor.fetchall()]
+
+    def store_message(self, username: str, text: str, ts: int) -> int:
+        """Almacena un mensaje de texto y retorna su ID."""
+        created_at = int(datetime.now().timestamp() * 1000)
+
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO messages (username, message_text, ts, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (username, text, ts, created_at),
+            )
+            message_id = cursor.lastrowid
+
+        logger.info(f"Mensaje {message_id} registrado para usuario '{username}'")
+        return message_id
+
+    def get_user_message_history(self, username: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Obtiene el historial de mensajes de un usuario en orden descendente."""
+        safe_limit = max(1, min(int(limit), 500))
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, username, message_text, ts, created_at
+                FROM messages
+                WHERE username = ?
+                ORDER BY ts DESC, id DESC
+                LIMIT ?
+                """,
+                (username, safe_limit),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+    def count_user_messages(self, username: str) -> int:
+        """Cuenta el total de mensajes de un usuario."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT COUNT(*) as count
+                FROM messages
+                WHERE username = ?
+                """,
+                (username,),
+            )
+            row = cursor.fetchone()
+            return int(row["count"]) if row else 0
 
     def record_login_attempt(self, username: str, ip_address: str, success: bool) -> None:
         """Registra un intento de login."""

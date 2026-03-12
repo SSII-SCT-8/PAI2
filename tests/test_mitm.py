@@ -13,7 +13,7 @@ from src.common import crypto
 class TestMITMRemoved(unittest.TestCase):
     def test_client_messages_do_not_include_mac(self):
         client = ClientAPI(host="127.0.0.1", port=9999)
-        msg = client._create_message("TX", "alice", {"amount": "10"})
+        msg = client._create_message("MSG", "alice", {"text": "hola"})
         self.assertNotIn("mac", msg)
 
     def test_hmac_helpers_removed_from_crypto_module(self):

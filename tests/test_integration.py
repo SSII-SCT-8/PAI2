@@ -29,7 +29,7 @@ class TestIntegration(unittest.TestCase):
             self.temp_db.unlink()
 
     def test_full_user_lifecycle(self):
-        """Registro -> login -> transaccion -> logout."""
+        """Registro -> login -> mensaje -> historial -> logout."""
         username = "alice"
         password = "SecurePass123!"
         client_ip = "127.0.0.1"
@@ -46,23 +46,19 @@ class TestIntegration(unittest.TestCase):
         self.assertTrue(resp["success"])
         session_id = resp["data"]["session_id"]
 
-        resp = self.handler.handle_transaction(
+        resp = self.handler.handle_message(
             username,
-            {
-                "from_account": "ES1111",
-                "to_account": "ES2222",
-                "amount": "500.00",
-            },
-            raw_message='{"test": "message"}',
+            {"text": "mensaje de prueba"},
             ts=1234567890,
         )
         self.assertTrue(resp["success"])
-        tx_id = resp["data"]["transaction_id"]
-        self.assertGreater(tx_id, 0)
+        msg_id = resp["data"]["message_id"]
+        self.assertGreater(msg_id, 0)
 
-        txs = self.storage.get_user_transactions(username)
-        self.assertEqual(len(txs), 1)
-        self.assertEqual(txs[0]["from_account"], "ES1111")
+        history = self.handler.handle_history(username, {"limit": 10})
+        self.assertTrue(history["success"])
+        self.assertEqual(history["data"]["total_messages"], 1)
+        self.assertEqual(history["data"]["messages"][0]["message_text"], "mensaje de prueba")
 
         resp = self.handler.handle_logout(username, {"session_id": session_id})
         self.assertTrue(resp["success"])

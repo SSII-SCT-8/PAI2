@@ -53,8 +53,9 @@ class InteractiveClient:
             print("9. Salir")
         else:
             print(f"\n--- SESION ACTIVA: {self.api.username} ---")
-            print("3. Enviar transaccion")
-            print("4. Cerrar sesion")
+            print("3. Enviar mensaje")
+            print("4. Ver historial")
+            print("5. Cerrar sesion")
             print("9. Salir")
 
         print()
@@ -82,8 +83,10 @@ class InteractiveClient:
                     elif choice == "2":
                         self._handle_login()
                     elif choice == "3" and self.api.username:
-                        self._handle_transaction()
+                        self._handle_send_message()
                     elif choice == "4" and self.api.username:
+                        self._handle_history()
+                    elif choice == "5" and self.api.username:
                         self._handle_logout()
                     elif choice == "9":
                         self.running = False
@@ -150,33 +153,52 @@ class InteractiveClient:
         else:
             print(f"Error: {response.get('message')}")
 
-    def _handle_transaction(self):
-        """Maneja el envio de transacciones."""
-        print("\n--- ENVIAR TRANSACCION ---")
-        print("Formato: Cuenta origen, Cuenta destino, Cantidad")
+    def _handle_send_message(self):
+        """Maneja el envio de mensajes de texto."""
+        print("\n--- ENVIAR MENSAJE ---")
+        print("Longitud permitida: 1..144 caracteres")
 
-        from_account = input("Cuenta origen: ").strip()
-        to_account = input("Cuenta destino: ").strip()
-        amount = input("Cantidad: ").strip()
+        text = input("Mensaje: ").rstrip("\n")
 
-        if not all([from_account, to_account, amount]):
-            print("Todos los campos son obligatorios")
-            return
-
-        print("\nEnviando transaccion...")
-        response = self.api.send_transaction(from_account, to_account, amount)
+        print("\nEnviando mensaje...")
+        response = self.api.send_message_text(text)
 
         if response.get("success"):
             print(response.get("message"))
             data = response.get("data", {})
             if data:
-                print(f"ID de transaccion: {data.get('transaction_id')}")
-                print(
-                    f"{data.get('from_account')} -> "
-                    f"{data.get('to_account')}: {data.get('amount')}"
-                )
+                print(f"ID de mensaje: {data.get('message_id')}")
+                print(f"Total mensajes: {data.get('total_messages')}")
         else:
             print(f"Error: {response.get('message')}")
+
+    def _handle_history(self):
+        """Maneja la consulta de historial de mensajes."""
+        print("\n--- HISTORIAL DE MENSAJES ---")
+        raw_limit = input("Limite (Enter para 50): ").strip()
+
+        limit = None
+        if raw_limit:
+            try:
+                limit = int(raw_limit)
+            except ValueError:
+                print("Error: el limite debe ser un numero entero")
+                return
+
+        response = self.api.get_history(limit=limit)
+        if not response.get("success"):
+            print(f"Error: {response.get('message')}")
+            return
+
+        data = response.get("data", {})
+        messages = data.get("messages", [])
+
+        print(response.get("message"))
+        print(f"Total historico: {data.get('total_messages', 0)}")
+        print(f"Mensajes devueltos: {len(messages)}")
+
+        for item in messages:
+            print(f"- [{item.get('ts')}] {item.get('message_text')}")
 
     def _handle_logout(self):
         """Maneja el cierre de sesion."""

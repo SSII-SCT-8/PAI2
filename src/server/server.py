@@ -266,22 +266,37 @@ class IntegrityServer:
             if msg_type == "LOGIN":
                 return self.handler.handle_login(username, payload, client_ip)
 
-            if msg_type == "TX":
+            if msg_type in ("MSG", "TX"):
                 if not session_username or session_username != username:
                     logger.warning(
-                        f"TX rechazada: usuario '{username}' sin sesion activa (IP: {client_ip})"
+                        f"{msg_type} rechazada: usuario '{username}' sin sesion activa (IP: {client_ip})"
                     )
                     return create_error_response(
                         "AUTH_ERROR",
-                        "Debe iniciar sesion antes de enviar transacciones",
+                        "Debe iniciar sesion antes de enviar mensajes",
                     )
-                raw_message = json.dumps(msg_dict, sort_keys=True)
-                return self.handler.handle_transaction(
-                    username,
-                    payload,
-                    raw_message,
-                    ts,
-                )
+
+                if msg_type == "TX":
+                    raw_message = json.dumps(msg_dict, sort_keys=True)
+                    return self.handler.handle_transaction(
+                        username,
+                        payload,
+                        raw_message,
+                        ts,
+                    )
+
+                return self.handler.handle_message(username, payload, ts)
+
+            if msg_type == "HISTORY":
+                if not session_username or session_username != username:
+                    logger.warning(
+                        f"HISTORY rechazada: usuario '{username}' sin sesion activa (IP: {client_ip})"
+                    )
+                    return create_error_response(
+                        "AUTH_ERROR",
+                        "Debe iniciar sesion antes de consultar historial",
+                    )
+                return self.handler.handle_history(username, payload)
 
             if msg_type == "LOGOUT":
                 if not session_username or session_username != username:

@@ -23,10 +23,26 @@ class TestCliente(unittest.TestCase):
         self.assertNotIn("mac", msg)
         self.assertNotIn("nonce", msg)
 
-    def test_send_tx_requires_auth(self):
-        response = self.client.send_transaction("ES1", "ES2", "10")
+    def test_send_msg_requires_auth(self):
+        response = self.client.send_message_text("hola")
         self.assertFalse(response.get("success"))
         self.assertIn("No autenticado", response.get("message"))
+
+    def test_send_msg_rejects_empty(self):
+        self.client.username = "alice"
+        self.client.session_id = "sess"
+
+        response = self.client.send_message_text("   ")
+        self.assertFalse(response.get("success"))
+        self.assertEqual(response.get("code"), "EMPTY_MESSAGE")
+
+    def test_send_msg_rejects_too_long(self):
+        self.client.username = "alice"
+        self.client.session_id = "sess"
+
+        response = self.client.send_message_text("x" * 145)
+        self.assertFalse(response.get("success"))
+        self.assertEqual(response.get("code"), "MSG_TOO_LONG")
 
     def test_logout_without_session(self):
         response = self.client.logout()
