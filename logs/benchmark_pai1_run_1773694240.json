@@ -1,0 +1,1609 @@
+{
+  "summary": {
+    "total_clients": 300,
+    "ok_clients": 231,
+    "failed_clients": 69,
+    "total_messages_sent": 462,
+    "errors": {
+      "REGISTER_FAILED": 27,
+      "LOGIN_FAILED": 25,
+      "TX_FAILED": 17
+    },
+    "duration_s": {
+      "min": 0.34664299996802583,
+      "max": 54.73447239998495,
+      "avg": 13.43922121298688,
+      "p50": 11.950344600016251,
+      "p95": 31.763057299994397
+    },
+    "elapsed_total_s": 61.73363490001066
+  },
+  "results": [
+    {
+      "ok": true,
+      "duration_s": 1.456276400014758,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 1.8983583000372164,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.3964171999832615,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.759725600015372,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 3.1904972000047565,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 3.419284500007052,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 3.7538086000131443,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.178256599989254,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.296861300012097,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.262974400015082,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.896554799983278,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.94975460000569,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.265852099983022,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.303050999995321,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.2944822999998,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.735035000019707,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.7658690999960527,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.465209099987987,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.730068899982143,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.112112800008617,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.645826299965847,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.809460899967235,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 7.14845979999518,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 7.271370000031311,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 10.238455799990334,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 7.35321530001238,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.08371169999009,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.452973400009796,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.568850699986797,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.3839152999571525,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.961441999999806,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 12.190850400016643,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 12.467756500001997,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.065535400004592,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.187724200019147,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.301677100011148
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.365641099982895
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.394385799998417
+    },
+    {
+      "ok": true,
+      "duration_s": 13.668692199978977,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.917812200030312
+    },
+    {
+      "ok": true,
+      "duration_s": 1.372286099998746,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.060100900009274
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.407485900039319
+    },
+    {
+      "ok": true,
+      "duration_s": 9.339809799974319,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.522973700019065
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.487064799992368
+    },
+    {
+      "ok": true,
+      "duration_s": 14.553492400038522,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 14.73410399997374,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.968994399998337,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.322053700045217,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.670892200025264,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.0987027999944985,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.546271300001536,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 16.176300699997228,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.7359698000364,
+      "sent": 0
+    },
+    {
+      "ok": true,
+      "duration_s": 16.524160899978597,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 12.897448499978054,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.16685919999145,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.304372299986426
+    },
+    {
+      "ok": true,
+      "duration_s": 2.711093100020662,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 17.909119500021916
+    },
+    {
+      "ok": true,
+      "duration_s": 13.122421299980488,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 18.097249799990095,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 0.6845531999715604,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 18.840660299989395,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "duration_s": 19.573542000027373,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.836828199971933,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.439684300043155
+    },
+    {
+      "ok": true,
+      "duration_s": 5.558699499990325,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.724212600034662
+    },
+    {
+      "ok": true,
+      "duration_s": 5.907324099971447,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 7.255200699961279,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.569680299959145
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 19.04793309996603
+    },
+    {
+      "ok": true,
+      "duration_s": 15.650140099984128,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 21.114349299983587,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 21.61208400002215,
+      "sent": 0
+    },
+    {
+      "ok": true,
+      "duration_s": 21.548689999966882,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.381939699989744,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 21.85268820001511,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 22.253600299998652,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.22140420001233,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 9.364890300028492,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 22.687436899985187,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 3.0982439999934286,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 23.029985199973453,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 23.107184600026812,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 3.1882015999872237,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 23.362498400034383,
+      "sent": 0
+    },
+    {
+      "ok": true,
+      "duration_s": 23.395299900032114,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 21.406686200003605,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 23.764267700025812,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 23.901804800028913,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 24.131764999998268,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 24.19144820002839,
+      "sent": 1
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.356379200005904
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.367600800003856,
+      "sent": 0
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 19.554160100000445
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.550162800005637
+    },
+    {
+      "ok": true,
+      "duration_s": 21.278434499981813,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.344363700016402,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 20.591987700026948,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.646160500007682,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 26.246866900008172,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.765390099957585,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 26.591309599985834,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 1.2605173999909312,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.039614500012249,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 27.229465699987486,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 1.244538399972953,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.751792200026102,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.072679300035816,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 27.857990199991036,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 0.34664299996802583,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.843938100035302,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 12.934056599973701,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 3.9805980999954045,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 28.794123300001957
+    },
+    {
+      "ok": true,
+      "duration_s": 6.539931899984367,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 0.4379781000316143,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 17.097726699954364
+    },
+    {
+      "ok": true,
+      "duration_s": 30.676244399975985,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.4647588000516407,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 31.14905030000955
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 25.447985900042113
+    },
+    {
+      "ok": true,
+      "duration_s": 4.786545500042848,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.191166799981147,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.296279300004244
+    },
+    {
+      "ok": true,
+      "duration_s": 16.535728299990296,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.469116799999028,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.7420072000240907,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error procesando transacción",
+      "duration_s": 31.551493600010872,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "duration_s": 31.657188099983614,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 15.453258400026243
+    },
+    {
+      "ok": true,
+      "duration_s": 9.114799799979664,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 32.451570499979425,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.034842799999751,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 3.183686399948783,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.380527900008019
+    },
+    {
+      "ok": true,
+      "duration_s": 8.283967600029428,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 0.9599817000562325,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 33.5149566999753,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.072231600002851,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error procesando transacción",
+      "duration_s": 33.749422599968966,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "duration_s": 33.84747680003056,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.617728099983651,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 7.673186899977736,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 7.192976399965119,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 34.3231941999984
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.64127159997588
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 20.205278699984774
+    },
+    {
+      "ok": true,
+      "duration_s": 28.084075500024483,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.145717999956105,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.368689299968537
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error procesando transacción",
+      "duration_s": 21.690634099999443,
+      "sent": 0
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 18.313989800051786
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.376164900022559
+    },
+    {
+      "ok": true,
+      "duration_s": 9.691881000006106,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 25.11014239996439
+    },
+    {
+      "ok": true,
+      "duration_s": 21.9305549999699,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.00526850001188,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 17.647698500019033,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.923123099957593,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 1.230818799987901,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.127392299997155
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error procesando transacción",
+      "duration_s": 20.83078449999448,
+      "sent": 0
+    },
+    {
+      "ok": true,
+      "duration_s": 16.7489933000179,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.82207140000537
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 39.25685450003948,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "duration_s": 7.061509900027886,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.024229800037574,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 1.0544565000454895,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.195383400015999,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.933347199985292,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.820110600034241,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 14.122050100006163,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 40.40943729999708
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 22.941959299962036
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.389415799989365
+    },
+    {
+      "ok": true,
+      "duration_s": 2.778047300002072,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 9.344181300024502,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 41.76197729998967
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 27.552706499991473
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 27.998835899983533
+    },
+    {
+      "ok": true,
+      "duration_s": 19.03447660000529,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 21.450875699985772,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 27.15442560001975,
+      "sent": 0
+    },
+    {
+      "ok": true,
+      "duration_s": 8.076876500039361,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.5175466999644414,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.825932600011583,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 0.604598400008399,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.7362104000058025,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 19.13303129997803,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.987951999995857,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 24.8049055999727,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.582324500021059,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 12.911050099995919,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.492399099981412
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 24.05944580002688
+    },
+    {
+      "ok": true,
+      "duration_s": 27.959634499973617,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error procesando transacción",
+      "duration_s": 33.621327200031374,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "duration_s": 11.515457800007425,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.1322857000050135,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.23295140004484
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error procesando transacción",
+      "duration_s": 33.82127270003548,
+      "sent": 1
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 25.548065199982375
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 31.04690420004772
+    },
+    {
+      "ok": true,
+      "duration_s": 47.54464459995506,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 23.913875099970028,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 14.26892439997755
+    },
+    {
+      "ok": true,
+      "duration_s": 2.9559654999757186,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 21.00176419998752
+    },
+    {
+      "ok": true,
+      "duration_s": 6.358051799994428,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 16.88969189999625,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 2.381939000042621,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 24.972667899972294,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "duration_s": 16.720793399959803,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 17.727242399996612,
+      "sent": 1
+    },
+    {
+      "ok": true,
+      "duration_s": 20.1356902999687,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 9.835169900034089,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 17.350585700012743,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 10.720534500025678,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 25.959670100011863,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 9.26302419998683,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.178761999995913,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 26.556226399959996
+    },
+    {
+      "ok": true,
+      "duration_s": 15.425227299972903,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 17.816746700031217
+    },
+    {
+      "ok": true,
+      "duration_s": 19.421875300002284,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.315484699967783,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.861507199995685,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 17.09371360001387
+    },
+    {
+      "ok": false,
+      "error": "TX_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 26.771066099987365,
+      "sent": 0
+    },
+    {
+      "ok": true,
+      "duration_s": 14.469661800016183,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 31.921861100010574,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 17.946631100028753,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 16.138355800008867,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 4.729350699984934,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.015865399967879,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 5.754190199950244,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "REGISTER_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 13.407792899990454
+    },
+    {
+      "ok": true,
+      "duration_s": 14.201674499956425,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 19.540812299994286,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.256096100027207,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 20.29379179998068,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.912984599999618,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 6.374791899987031,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 21.496849500050303,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.108742500015069,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 16.719728600000963,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.049605300009716,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.293248100031633,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 10.024318800016772,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "Error interno del servidor",
+      "duration_s": 22.707565199991222
+    },
+    {
+      "ok": true,
+      "duration_s": 22.186886199982837,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 19.9606528999866,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 23.369694699998945,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 19.563142900005914,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.950344600016251,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.787253400019836,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 21.164432199962903,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 8.385047400020994,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 32.442174900032114,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.325341499992646,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 10.369834200013429,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 10.41764100000728,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.235781700001098,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 10.902497900009621,
+      "sent": 2
+    },
+    {
+      "ok": false,
+      "error": "LOGIN_FAILED",
+      "detail": "database is locked",
+      "duration_s": 28.254904699977487
+    },
+    {
+      "ok": true,
+      "duration_s": 16.657040800026152,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 14.048753899987787,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 11.649355500005186,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.686565300042275,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 25.977740400005132,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 22.40287069999613,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 12.372995599987917,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 16.69253350002691,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 20.526455500046723,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 37.98361140000634,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 36.77877939998871,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 16.32775940001011,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.729804100003093,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 14.22106419998454,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 29.23727440001676,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 20.7808526000008,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 23.870527999999467,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 33.06596969999373,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.053073299990501,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 12.790727799991146,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 16.646453899971675,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 20.615572399983648,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 30.22767799999565,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 15.859092900005635,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 18.20974959997693,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 22.559052900003735,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 13.490500800020527,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 54.73447239998495,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 20.69590719998814,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 21.58628809999209,
+      "sent": 2
+    },
+    {
+      "ok": true,
+      "duration_s": 34.10521890001837,
+      "sent": 2
+    }
+  ]
+}
