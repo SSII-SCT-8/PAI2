@@ -16,6 +16,7 @@ from .config import (
     TLS_CA_FILE,
     TLS_MIN_VERSION,
     TLS_SERVER_HOSTNAME,
+    TLS_ALLOWED_CIPHERS,
 )
 from ..common.protocol import send_message, receive_message
 from ..common.errors import ProtocolError
@@ -58,6 +59,18 @@ class ClientAPI:
                 raw_socket,
                 server_hostname=TLS_SERVER_HOSTNAME,
             )
+            negotiated = self.sock.cipher()
+            cipher_name = negotiated[0] if negotiated else None
+            if cipher_name not in TLS_ALLOWED_CIPHERS:
+                self.last_connect_error_code = "TLS_CIPHER_NOT_ALLOWED"
+                logger.error(
+                    "Cipher TLS no permitido por politica local: "
+                    f"{cipher_name}. Permitidos: {TLS_ALLOWED_CIPHERS}"
+                )
+                self.connected = False
+                self.sock.close()
+                self.sock = None
+                return False
 
             self.connected = True
             logger.info(

@@ -23,6 +23,7 @@ from .config import (
     TLS_CA_FILE,
     TLS_MIN_VERSION,
     TLS_ECDH_CURVE,
+    TLS_ALLOWED_CIPHERS,
 )
 from .storage import Storage
 from .security import SecurityManager
@@ -119,6 +120,17 @@ class IntegrityServer:
                             client_socket,
                             server_side=True,
                         )
+                        negotiated = client_socket.cipher()
+                        cipher_name = negotiated[0] if negotiated else None
+                        if cipher_name not in TLS_ALLOWED_CIPHERS:
+                            logger.warning(
+                                "Conexion rechazada por cipher no permitido desde "
+                                f"{client_address}: {cipher_name}"
+                            )
+                            with self.connections_lock:
+                                self.active_connections -= 1
+                            client_socket.close()
+                            continue
                     except ssl.SSLError as e:
                         logger.warning(
                             f"Handshake TLS fallido desde {client_address}: {e}"

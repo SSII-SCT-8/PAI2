@@ -25,6 +25,14 @@ TLS_KEY_FILE = Path(os.getenv("TLS_KEY_FILE", str(CONFIG_DIR / "tls" / "server.k
 TLS_CA_FILE = Path(os.getenv("TLS_CA_FILE", str(CONFIG_DIR / "tls" / "ca.crt")))
 TLS_MIN_VERSION = os.getenv("TLS_MIN_VERSION", "1.3")
 TLS_ECDH_CURVE = os.getenv("TLS_ECDH_CURVE", "prime256v1")
+TLS_ALLOWED_CIPHERS = tuple(
+    cipher.strip()
+    for cipher in os.getenv(
+        "TLS_ALLOWED_CIPHERS",
+        "TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_AES_128_GCM_SHA256",
+    ).split(",")
+    if cipher.strip()
+)
 
 MAX_LOGIN_ATTEMPTS = 5
 RATE_LIMIT_WINDOW = 300       # 5 min
@@ -36,4 +44,4 @@ LOG_TO_FILE = True
 LOG_TO_CONSOLE = True
 
 DB_TIMEOUT = 10.0
-MAX_CONNECTIONS = 100
+MAX_CONNECTIONS = int(os.getenv("MAX_CONNECTIONS", "300"))

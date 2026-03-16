@@ -21,6 +21,14 @@ TRANSPORT_MODE = os.getenv("TRANSPORT_MODE", "TLS")
 TLS_CA_FILE = Path(os.getenv("TLS_CA_FILE", str(BASE_DIR / "config" / "tls" / "ca.crt")))
 TLS_MIN_VERSION = os.getenv("TLS_MIN_VERSION", "1.3")
 TLS_SERVER_HOSTNAME = os.getenv("TLS_SERVER_HOSTNAME", SERVER_HOST)
+TLS_ALLOWED_CIPHERS = tuple(
+    cipher.strip()
+    for cipher in os.getenv(
+        "TLS_ALLOWED_CIPHERS",
+        "TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_AES_128_GCM_SHA256",
+    ).split(",")
+    if cipher.strip()
+)
 
 CONNECT_TIMEOUT = 10.0
 MESSAGE_TIMEOUT = 30.0
