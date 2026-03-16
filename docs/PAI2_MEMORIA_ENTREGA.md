@@ -21,7 +21,7 @@ Decisiones principales:
 Referencias de implementacion:
 
 - Transporte TLS: `src/common/transport.py`.
-- Parametros TLS: `src/server/config.py` (`TLS_MIN_VERSION=1.3`, `TLS_ECDH_CURVE=prime256v1`).
+- Parametros TLS: `src/server/config.py` (`TLS_MIN_VERSION=1.3`, `TLS_ECDH_CURVE=prime256v1`, `TLS_ALLOWED_CIPHERS`).
 - Modelo de mensajes (1..144): `src/common/models.py`.
 - Handlers de `MSG`/`HISTORY`: `src/server/handlers.py`.
 - Persistencia de mensajes: `src/server/storage.py`.
@@ -41,7 +41,7 @@ Referencias de implementacion:
 Ejecucion local de test realizada el **16/03/2026**:
 
 - Comando: `python -m unittest discover -s tests -p "test_*.py" -v`
-- Resultado: **46 tests ejecutados, 46 OK**
+- Resultado: **53 tests ejecutados, 53 OK**
 
 Coberturas destacables:
 
@@ -50,6 +50,18 @@ Coberturas destacables:
 3. Seguridad de login (`tests/test_security.py`, `tests/test_rate_limit.py`).
 4. Transporte TLS y rechazo de CA invalida (`tests/test_tls_transport_integration.py`, `tests/test_transport_tls.py`).
 5. Generacion de certificados ECC/RSA (`tests/test_tls_cert_generation.py`).
+
+Evidencia final de benchmark comparativo (16/03/2026):
+
+- Comando: `python scripts/run_benchmark_pai1_vs_pai2.py --clients 300 --workers 80 --messages-per-client 2`
+- Salidas: `logs/benchmark_pai1_run_1773694240.json`, `logs/benchmark_pai2_run_1773694240.json`, `docs/BENCHMARK_COMPARATIVA.md`
+- Resultado observado:
+  - PAI1 (sin TLS): `231/300` clientes OK, `462` tx, `7.484 msg/s`, latencia media `13.439 s`, p95 `31.763 s`.
+  - PAI2 (TLS 1.3): `262/300` clientes OK, `524` mensajes, `13.761 msg/s`, latencia media `7.786 s`, p95 `21.852 s`.
+
+Nota de alcance para esta entrega:
+
+- No se incluyen trazas de sniffer (`.pcap`) en el entregable actual.
 
 ## 2. Manual de despliegue y uso (Linux)
 
@@ -150,11 +162,27 @@ Criterio esperado:
 | Objetivo | Estado | Evidencia | Comentario |
 |---|---|---|---|
 | Canal seguro para credenciales y mensajes con SSL/TLS | **Cumplido** | `src/common/transport.py`, `src/client/api.py`, `src/server/server.py` | TLS 1.3 forzado cliente/servidor |
-| Cipher suites robustos con TLS 1.3 | **Parcial** | `TLS_MIN_VERSION=1.3`, `TLS_ECDH_CURVE=prime256v1` en `src/server/config.py` | Hay endurecimiento de version/curva; no hay fijacion explicita de ciphersuite |
-| Analisis de trafico para verificar canal seguro | **Parcial** | Procedimiento en esta memoria | Falta adjuntar trazas `.pcap` y analisis en el zip |
-| Soportar ~300 empleados concurrentes | **No cumplido** | `MAX_CONNECTIONS = 100` en `src/server/config.py` | Limite actual inferior al objetivo |
-| Analisis de rendimiento y escalabilidad con/sin SSL/TLS | **No cumplido** | No hay benchmark en repo | Faltan pruebas de carga y comparativa |
+| Cipher suites robustos con TLS 1.3 | **Cumplido** | `TLS_ALLOWED_CIPHERS` + verificacion de cipher negociado en cliente/servidor | Se aplica politica allowlist sobre el cipher TLS negociado |
+| Analisis de trafico para verificar canal seguro | **No entregado en esta version** | Procedimiento definido en esta memoria | Se documenta metodologia, pero no se anexan `.pcap` |
+| Soportar ~300 empleados concurrentes | **Parcial** | Benchmark con `300` clientes en `docs/BENCHMARK_COMPARATIVA.md` | Se alcanza carga objetivo de prueba, con degradacion y fallos bajo pico |
+| Analisis de rendimiento y escalabilidad con/sin SSL/TLS | **Cumplido** | `scripts/benchmark_tls_capacity.py`, `scripts/benchmark_pai1_capacity.py`, `scripts/run_benchmark_pai1_vs_pai2.py`, `docs/BENCHMARK_COMPARATIVA.md` | Comparativa ejecutada y trazable con metrica objetiva |
 | Extra MitM activo (opcional) | **Parcial (opcional)** | rechazo de CA invalida en `tests/test_tls_transport_integration.py` | No hay memoria de ataque MitM completo |
+
+#### Resultado sintetico de benchmark (300 clientes)
+
+| Metrica | PAI1 (sin TLS) | PAI2 (TLS 1.3) |
+|---|---:|---:|
+| Clientes OK | 231 | 262 |
+| Clientes fallidos | 69 | 38 |
+| Mensajes/tx enviados | 462 | 524 |
+| Tiempo total (s) | 61.734 | 38.080 |
+| Throughput (msg/s) | 7.484 | 13.761 |
+| Latencia media por cliente (s) | 13.439 | 7.786 |
+| Latencia p95 por cliente (s) | 31.763 | 21.852 |
+
+Interpretacion:
+- En esta corrida concreta, la implementacion TLS obtuvo mejor throughput y menor latencia que el baseline PAI1.
+- El objetivo de 300 concurrencias se considero en la prueba, pero ambos escenarios presentan errores bajo pico.
 
 ### 3.2 Requisitos funcionales
 
@@ -196,9 +224,8 @@ Criterio esperado:
 
 Prioridad alta:
 
-1. Ajustar arquitectura de concurrencia para aproximar objetivo de 300 sesiones simultaneas.
-2. Ejecutar y documentar benchmark de rendimiento/escalabilidad con metrica objetiva.
-3. Adjuntar evidencias de sniffing (`.pcap` + capturas + interpretacion) en el entregable final.
+1. Reducir tasa de fallo en picos de 300 clientes concurrentes (registro/login/transporte).
+2. Si el alcance de evaluacion lo exige, anexar evidencias de sniffing (`.pcap` + capturas + interpretacion).
 
 Prioridad media:
 
@@ -211,12 +238,12 @@ Prioridad baja (extra):
 
 ## 5. Empaquetado de entrega (zip)
 
-Contenido minimo recomendado de `PAI2-STX.zip`:
+Contenido recomendado de `PAI2-STX.zip` para esta entrega:
 
 1. Codigo fuente.
 2. Tests y salida de ejecucion.
 3. Logs de servidor/cliente.
-4. Trazas de sniffer y resumen.
+4. Evidencia de benchmark comparativo (`logs/*.json` + `docs/BENCHMARK_COMPARATIVA.md`).
 5. Memoria PDF.
 
 Comando Linux:
