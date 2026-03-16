@@ -1,4 +1,4 @@
-# PAI-2 BYODSEC - Memoria de Entrega (analisis actualizado)
+# PAI-2 BYODSEC - Memoria de Entrega
 
 ## 1. Resumen de decisiones tecnicas y algoritmicas
 
@@ -138,6 +138,8 @@ chmod +x scripts/*.sh
 
 ### 2.7 Verificacion de canal cifrado (sniffer)
 
+> Nota: en esta entrega se documenta la metodologia, pero no se adjuntan trazas `.pcap` ejecutadas.
+
 Captura:
 
 ```bash
@@ -147,7 +149,8 @@ sudo tcpdump -i lo -nn -s0 -w logs/tls_capture.pcap tcp port 9999
 Inspeccion:
 
 ```bash
-tshark -r logs/tls_capture.pcap -Y "tls" -T fields -e frame.number -e ip.src -e ip.dst -e tls.record.version
+tshark -r logs/tls_capture.pcap -Y "tls" -T fields -e frame.number \
+  -e ip.src -e ip.dst -e tls.record.version
 ```
 
 Criterio esperado:
@@ -165,7 +168,7 @@ Criterio esperado:
 | Cipher suites robustos con TLS 1.3 | **Cumplido** | `TLS_ALLOWED_CIPHERS` + verificacion de cipher negociado en cliente/servidor | Se aplica politica allowlist sobre el cipher TLS negociado |
 | Analisis de trafico para verificar canal seguro | **No entregado en esta version** | Procedimiento definido en esta memoria | Se documenta metodologia, pero no se anexan `.pcap` |
 | Soportar ~300 empleados concurrentes | **Parcial** | Benchmark con `300` clientes en `docs/BENCHMARK_COMPARATIVA.md` | Se alcanza carga objetivo de prueba, con degradacion y fallos bajo pico |
-| Analisis de rendimiento y escalabilidad con/sin SSL/TLS | **Cumplido** | `scripts/benchmark_tls_capacity.py`, `scripts/benchmark_pai1_capacity.py`, `scripts/run_benchmark_pai1_vs_pai2.py`, `docs/BENCHMARK_COMPARATIVA.md` | Comparativa ejecutada y trazable con metrica objetiva |
+| Analisis de rendimiento y escalabilidad con/sin SSL/TLS | **Parcial** | `scripts/benchmark_tls_capacity.py`, `scripts/benchmark_pai1_capacity.py`, `scripts/run_benchmark_pai1_vs_pai2.py`, `docs/BENCHMARK_COMPARATIVA.md` | Comparativa ejecutada y trazable; persisten errores bajo carga |
 | Extra MitM activo (opcional) | **Parcial (opcional)** | rechazo de CA invalida en `tests/test_tls_transport_integration.py` | No hay memoria de ataque MitM completo |
 
 #### Resultado sintetico de benchmark (300 clientes)
@@ -219,41 +222,3 @@ Interpretacion:
 | Proteccion frente a brute force | **Cumplido** | `SecurityManager.check_rate_limit` | |
 | Integridad/confidencialidad/autenticidad en envio | **Cumplido** | TLS 1.3 obligatorio | |
 | Integridad de datos en BD | **Parcial** | restricciones SQL + flujo controlado | No hay firma/MAC en reposo ni controles de auditoria avanzados |
-
-## 4. Riesgos abiertos y acciones recomendadas
-
-Prioridad alta:
-
-1. Reducir tasa de fallo en picos de 300 clientes concurrentes (registro/login/transporte).
-2. Si el alcance de evaluacion lo exige, anexar evidencias de sniffing (`.pcap` + capturas + interpretacion).
-
-Prioridad media:
-
-1. Limpiar nomenclatura legacy (`TX`, `transactions`) cuando ya no se necesite compatibilidad.
-2. Afinar validaciones y trazabilidad de auditoria (por ejemplo, eventos de seguridad estructurados).
-
-Prioridad baja (extra):
-
-1. Documentar prueba MitM activa controlada con metodologia y resultado.
-
-## 5. Empaquetado de entrega (zip)
-
-Contenido recomendado de `PAI2-STX.zip` para esta entrega:
-
-1. Codigo fuente.
-2. Tests y salida de ejecucion.
-3. Logs de servidor/cliente.
-4. Evidencia de benchmark comparativo (`logs/*.json` + `docs/BENCHMARK_COMPARATIVA.md`).
-5. Memoria PDF.
-
-Comando Linux:
-
-```bash
-zip -r PAI2-STX.zip src config scripts tests docs logs readme.md requirements.txt .env.example
-```
-
-Conversion a PDF:
-
-```bash
-pandoc docs/PAI2_MEMORIA_ENTREGA.md -o docs/PAI2_MEMORIA_ENTREGA.pdf
-```
